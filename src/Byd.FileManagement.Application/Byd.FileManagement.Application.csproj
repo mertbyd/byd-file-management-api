@@ -16,6 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Byd.CoreExtensions.Application" Version="0.1.0" />
+    <PackageReference Include="Byd.CoreExtensions.Application" Version="0.2.0" />
   </ItemGroup>
 </Project>

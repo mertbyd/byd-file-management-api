@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Byd.CoreExtensions.Extensions;
 using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -22,5 +23,7 @@ public class FileManagementDbContext : AbpDbContext<FileManagementDbContext>, IF
         base.OnModelCreating(builder);
 
         builder.ConfigureFileManagement();
+
+        builder.ApplySnakeCaseNaming();
     }
 }
