@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/host/">
+    <Project Path="host/Byd.FileManagement.Host.Shared/Byd.FileManagement.Host.Shared.csproj" />
+    <Project Path="host/Byd.FileManagement.HttpApi.Host/Byd.FileManagement.HttpApi.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Byd.FileManagement.Application.Contracts/Byd.FileManagement.Application.Contracts.csproj" />
+    <Project Path="src/Byd.FileManagement.Application/Byd.FileManagement.Application.csproj" />
+    <Project Path="src/Byd.FileManagement.Domain.Shared/Byd.FileManagement.Domain.Shared.csproj" />
+    <Project Path="src/Byd.FileManagement.Domain/Byd.FileManagement.Domain.csproj" />
+    <Project Path="src/Byd.FileManagement.EntityFrameworkCore/Byd.FileManagement.EntityFrameworkCore.csproj" />
+    <Project Path="src/Byd.FileManagement.HttpApi.Client/Byd.FileManagement.HttpApi.Client.csproj" />
+    <Project Path="src/Byd.FileManagement.HttpApi/Byd.FileManagement.HttpApi.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Byd.FileManagement.Application.Tests/Byd.FileManagement.Application.Tests.csproj" />
+    <Project Path="test/Byd.FileManagement.Domain.Tests/Byd.FileManagement.Domain.Tests.csproj" />
+    <Project Path="test/Byd.FileManagement.EntityFrameworkCore.Tests/Byd.FileManagement.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="test/Byd.FileManagement.TestBase/Byd.FileManagement.TestBase.csproj" />
+  </Folder>
+</Solution>

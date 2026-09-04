@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Byd.FileManagement</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Byd.FileManagement.Domain\Byd.FileManagement.Domain.csproj" />
+    <ProjectReference Include="..\Byd.FileManagement.TestBase\Byd.FileManagement.TestBase.csproj" />
+  </ItemGroup>
+
+
+</Project>

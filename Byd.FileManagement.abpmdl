@@ -1,0 +1,79 @@
+{
+  "folders": {
+    "items": {
+      "src": {},
+      "test": {},
+      "host": {}
+    }
+  },
+  "packages": {
+    "Byd.FileManagement.Domain.Shared": {
+      "path": "src/Byd.FileManagement.Domain.Shared/Byd.FileManagement.Domain.Shared.abppkg",
+      "folder": "src"
+    },
+    "Byd.FileManagement.Domain": {
+      "path": "src/Byd.FileManagement.Domain/Byd.FileManagement.Domain.abppkg",
+      "folder": "src"
+    },
+    "Byd.FileManagement.Application.Contracts": {
+      "path": "src/Byd.FileManagement.Application.Contracts/Byd.FileManagement.Application.Contracts.abppkg",
+      "folder": "src"
+    },
+    "Byd.FileManagement.Application": {
+      "path": "src/Byd.FileManagement.Application/Byd.FileManagement.Application.abppkg",
+      "folder": "src"
+    },
+    "Byd.FileManagement.EntityFrameworkCore": {
+      "path": "src/Byd.FileManagement.EntityFrameworkCore/Byd.FileManagement.EntityFrameworkCore.abppkg",
+      "folder": "src"
+    },
+    "Byd.FileManagement.MongoDB": {
+      "path": "src/Byd.FileManagement.MongoDB/Byd.FileManagement.MongoDB.abppkg",
+      "folder": "src"
+    },
+    "Byd.FileManagement.HttpApi": {
+      "path": "src/Byd.FileManagement.HttpApi/Byd.FileManagement.HttpApi.abppkg",
+      "folder": "src"
+    },
+    "Byd.FileManagement.HttpApi.Client": {
+      "path": "src/Byd.FileManagement.HttpApi.Client/Byd.FileManagement.HttpApi.Client.abppkg",
+      "folder": "src"
+    },
+    "Byd.FileManagement.TestBase": {
+      "path": "test/Byd.FileManagement.TestBase/Byd.FileManagement.TestBase.abppkg",
+      "folder": "test"
+    },
+    "Byd.FileManagement.EntityFrameworkCore.Tests": {
+      "path": "test/Byd.FileManagement.EntityFrameworkCore.Tests/Byd.FileManagement.EntityFrameworkCore.Tests.abppkg",
+      "folder": "test"
+    },
+    "Byd.FileManagement.MongoDB.Tests": {
+      "path": "test/Byd.FileManagement.MongoDB.Tests/Byd.FileManagement.MongoDB.Tests.abppkg",
+      "folder": "test"
+    },
+    "Byd.FileManagement.Domain.Tests": {
+      "path": "test/Byd.FileManagement.Domain.Tests/Byd.FileManagement.Domain.Tests.abppkg",
+      "folder": "test"
+    },
+    "Byd.FileManagement.Application.Tests": {
+      "path": "test/Byd.FileManagement.Application.Tests/Byd.FileManagement.Application.Tests.abppkg",
+      "folder": "test"
+    },
+    "Byd.FileManagement.HttpApi.Host": {
+      "path": "host/Byd.FileManagement.HttpApi.Host/Byd.FileManagement.HttpApi.Host.abppkg",
+      "folder": "host"
+    },
+    "Byd.FileManagement.HttpApi.Client.ConsoleTestApp": {
+      "path": "test/Byd.FileManagement.HttpApi.Client.ConsoleTestApp/Byd.FileManagement.HttpApi.Client.ConsoleTestApp.abppkg",
+      "folder": "test"
+    },
+    "Byd.FileManagement.AuthServer": {
+      "path": "host/Byd.FileManagement.AuthServer/Byd.FileManagement.AuthServer.abppkg",
+      "folder": "host"
+    },
+    "Byd.FileManagement.Host.Shared": {
+      "path": "host/Byd.FileManagement.Host.Shared/Byd.FileManagement.Host.Shared.abppkg",
+      "folder": "host"
+    }
+  }
+}
