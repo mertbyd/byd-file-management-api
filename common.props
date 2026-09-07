@@ -1,0 +1,36 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Version>0.1.0</Version>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <AbpProjectType>module</AbpProjectType>
+  </PropertyGroup>
+
+  <!-- NuGet paket kimlik bilgileri. Paket kimligi proje adidir. -->
+  <PropertyGroup>
+    <Authors>mertbyd</Authors>
+    <Company>Mert Ali Baydemir</Company>
+    <Product>Byd.FileManagement</Product>
+    <Description>Byd.FileManagement file modul katmani.</Description>
+    <RepositoryUrl>https://github.com/mertbyd/byd-file-management-api.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/mertbyd/byd-file-management-api</PackageProjectUrl>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="ConfigureAwait.Fody" Version="3.3.1" PrivateAssets="All" />
+    <PackageReference Include="Fody" Version="6.5.3">
+      <PrivateAssets>All</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+
+  <Target Name="NoWarnOnRazorViewImportedTypeConflicts" BeforeTargets="RazorCoreCompile">
+    <PropertyGroup>
+      <NoWarn>$(NoWarn);0436</NoWarn>
+    </PropertyGroup>
+  </Target>
+
+</Project>

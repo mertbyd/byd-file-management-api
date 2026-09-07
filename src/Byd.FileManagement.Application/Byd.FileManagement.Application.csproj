@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Byd.FileManagement</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Mapperly" Version="10.3.0" />
+    <PackageReference Include="Volo.Abp.Ddd.Application" Version="10.3.0" />
+    <ProjectReference Include="..\Byd.FileManagement.Application.Contracts\Byd.FileManagement.Application.Contracts.csproj" />
+    <ProjectReference Include="..\Byd.FileManagement.Domain\Byd.FileManagement.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Byd.CoreExtensions.Application" Version="0.2.0" />
+  </ItemGroup>
+</Project>
