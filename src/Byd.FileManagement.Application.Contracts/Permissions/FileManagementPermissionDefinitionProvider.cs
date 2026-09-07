@@ -19,6 +19,7 @@ public partial class FileManagementPermissionDefinitionProvider : PermissionDefi
             L(FileManagementLocalizationKeys.Permissions.Group));
 
         AddFileCategoriesPermissions(group);
+        AddStoredFilesPermissions(group);
     }
 
     // Localization anahtarini modul kaynagina baglar.

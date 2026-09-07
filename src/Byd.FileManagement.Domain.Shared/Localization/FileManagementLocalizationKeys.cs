@@ -11,5 +11,7 @@ public static class FileManagementLocalizationKeys
         public const string FileCategories = "Permission:FileCategories";
         public const string FileCategoriesView = "Permission:FileCategories.View";
         public const string FileCategoriesManage = "Permission:FileCategories.Manage";
+        public const string StoredFiles = "Permission:StoredFiles";
+        public const string StoredFilesView = "Permission:StoredFiles.View";
     }
 }
