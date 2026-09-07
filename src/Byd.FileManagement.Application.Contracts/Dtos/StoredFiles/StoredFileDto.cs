@@ -10,13 +10,14 @@ namespace Byd.FileManagement.Dtos.StoredFiles;
 public class StoredFileDto
 {
     public Guid Id { get; set; }
-    public string ModuleName { get; set; } = default!;
     public Guid ExternalId { get; set; }
-    public Guid CategoryId { get; set; }
-    public string BlobName { get; set; } = default!;
-    public string OriginalFileName { get; set; } = default!;
     public Guid? TenantId { get; set; }
     public Guid? OrganizationId { get; set; }
+    public Guid CategoryId { get; set; }
+    public string CategoryName { get; set; } = default!;
+    public string ModuleName { get; set; } = default!;
+    public string BlobName { get; set; } = default!;
+    public string OriginalFileName { get; set; } = default!;
     public DateTime CreationTime { get; set; }
     public DateTime? LastModificationTime { get; set; }
 }

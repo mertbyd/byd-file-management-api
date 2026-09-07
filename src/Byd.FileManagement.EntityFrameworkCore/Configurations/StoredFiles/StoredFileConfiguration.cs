@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Byd.FileManagement.Consts;
-using Byd.FileManagement.Entities.FileCategories;
 using Byd.FileManagement.Entities.StoredFiles;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 
@@ -31,7 +30,7 @@ public sealed class StoredFileConfiguration : IEntityTypeConfiguration<StoredFil
             .HasMaxLength(StoredFileConsts.MaxOriginalFileNameLength);
 
         // Kategori silinirse ona bagli dosya metadatasi sessizce kaybolmaz; silme engellenir.
-        builder.HasOne<FileCategory>()
+        builder.HasOne(entity => entity.Category)
             .WithMany()
             .HasForeignKey(entity => entity.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Byd.CoreExtensions.Repositories;
+using Byd.CoreExtensions.Querying;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.Interfaces.StoredFiles;
 using Volo.Abp.DependencyInjection;
@@ -31,12 +32,18 @@ public class EfCoreStoredFileRepository
     {
     }
 
+    // StoredFile okuma sorgularina DTO'nun CategoryName kaynagini ekler.
+    public override async Task<IQueryable<StoredFile>> WithDetailsAsync()
+    {
+        return (await GetQueryableAsync()).Include(entity => entity.Category);
+    }
+
     // Is kaydi kimliklerinin dosyalarini veritabaninda tek sorguyla getirir.
     public virtual async Task<List<StoredFile>> GetListByExternalIdsAsync(
         IEnumerable<Guid> externalIds,
         CancellationToken cancellationToken = default)
     {
-        return await ByExternalIds(await GetQueryableAsync(), externalIds)
+        return await ByExternalIds(await WithDetailsAsync(), externalIds)
             .ToListAsync(cancellationToken);
     }
 
@@ -46,8 +53,16 @@ public class EfCoreStoredFileRepository
         Guid categoryId,
         CancellationToken cancellationToken = default)
     {
-        return await InSlot(await GetQueryableAsync(), externalId, categoryId)
+        return await InSlot(await WithDetailsAsync(), externalId, categoryId)
             .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    // Filtreli listede kategori adini ayni sorguda getirir.
+    protected override async Task<IQueryable<StoredFile>> CreateFilteredQueryAsync<TFiltering>(
+        IDataTablePagingProperty<TFiltering> pagingProperty)
+    {
+        return (await base.CreateFilteredQueryAsync(pagingProperty))
+            .Include(entity => entity.Category);
     }
 
     private static IQueryable<StoredFile> ByExternalIds(

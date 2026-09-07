@@ -9,6 +9,7 @@ using Byd.FileManagement.Interfaces.FileCategories;
 using Byd.FileManagement.Interfaces.StoredFiles;
 using Byd.FileManagement.Managers.FileCategories;
 using Byd.FileManagement.Managers.StoredFiles;
+using Byd.FileManagement.Mappers.StoredFiles;
 using Shouldly;
 using Xunit;
 
@@ -42,6 +43,7 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
             files.Count.ShouldBe(1);
             files.ShouldContain(item => item.Id == wanted.Id);
             files.ShouldNotContain(item => item.Id == other.Id);
+            files[0].Category.Name.ShouldBe(category.Name);
         });
     }
 
@@ -61,6 +63,8 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
 
             found.ShouldNotBeNull();
             found.Id.ShouldBe(file.Id);
+            found.Category.Name.ShouldBe(category.Name);
+            new StoredFileMapper().Map(found).CategoryName.ShouldBe(category.Name);
             empty.ShouldBeNull();
         });
     }

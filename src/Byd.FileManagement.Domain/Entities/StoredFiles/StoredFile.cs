@@ -1,6 +1,6 @@
 ﻿using System;
+using Byd.FileManagement.Entities.FileCategories;
 using Volo.Abp.Domain.Entities.Auditing;
-
 namespace Byd.FileManagement.Entities.StoredFiles;
 
 /// <summary>
@@ -21,20 +21,18 @@ public class StoredFile : AuditedAggregateRoot<Guid>
     public Guid? OrganizationId { get; internal set; }
     // Dosyanin bagli oldugu FileCategory kaydinin kimligi.
     public Guid CategoryId { get; internal set; }
+    // DTO'daki CategoryId-CategoryName ciftinin guncel ad kaynagidir.
+    public FileCategory Category { get; internal set; } = default!;
     // Kaydin onay durumu; okuma uclari yalniz Onayli kayitlari dondurur.
     public Guid StatusId { get; internal set; }
-    // Kaydi yazan modulun adi; DTO'dan degil, CurrentModuleNameProvider'dan gelir.
-    public string ModuleName { get; internal set; } = default!;
     // Dosyayi talep eden is kaydinin dis kimligi.
     public Guid ExternalId { get; internal set; }
+    // Kaydi yazan modulun adi; DTO'dan degil, CurrentModuleNameProvider'dan gelir.
+    public string ModuleName { get; internal set; } = default!;
     // Icerigin saglayicidaki blob adi.
     public string BlobName { get; internal set; } = default!;
     // Kullanicinin yukledigi ozgun dosya adi.
     public string OriginalFileName { get; internal set; } = default!;
-
-
-    
-
     // TODO: SubOrganizationId — alt organizasyon kirilimi gerektiginde eklenecek.
     //       Su an hicbir tuketici bu seviyede filtrelemiyor; kolon acilmadi.
 
