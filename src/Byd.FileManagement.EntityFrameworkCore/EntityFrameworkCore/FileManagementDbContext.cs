@@ -16,6 +16,9 @@ public class FileManagementDbContext : BydDbContext<FileManagementDbContext>, IF
     // StoredFile repository'sinin calistigi aggregate setidir.
     public DbSet<StoredFile> StoredFiles { get; set; }
 
+    // StoredFileStatus repository'sinin calistigi lookup setidir.
+    public DbSet<StoredFileStatus> StoredFileStatuses { get; set; }
+
     public FileManagementDbContext(DbContextOptions<FileManagementDbContext> options)
         : base(options)
     {

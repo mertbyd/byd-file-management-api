@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Byd.FileManagement.Dtos.StoredFiles;
 using Byd.FileManagement.Entities.StoredFiles;
+using Byd.FileManagement.Models.StoredFiles;
 using Riok.Mapperly.Abstractions;
 
 namespace Byd.FileManagement.Mappers.StoredFiles;
@@ -18,4 +19,22 @@ public partial class StoredFileMapper
 
     // Saklanan dosya entity listesini public cevap listesine esler.
     public partial List<StoredFileDto> Map(List<StoredFile> source);
+
+    // Yukleme istegini Manager'in bekledigi domain create modeline esler.
+    public partial StoredFileCreateModel Map(UploadStoredFileDto source);
+
+    // Kayit alanlarini depodan okunan byte'larla birlestirip indirme sozlesmesine esler.
+    // Icerik tipi kayitta tutulmadigi icin burada dosya adindan cozulur.
+    [MapProperty(
+        nameof(StoredFile.OriginalFileName),
+        nameof(DownloadStoredFileDto.ContentType),
+        Use = nameof(ResolveContentType))]
+    public partial DownloadStoredFileDto Map(StoredFile source, byte[] data);
+
+    // Yazma aninda cozulebilirligi dogrulandigi icin burada varsayilana dusmez.
+    // Default = false: yalnizca yukaridaki MapProperty cagirir. Aksi halde Mapperly bunu
+    // genel bir string->string eslemesi sayip her metin alanini icerik tipine cevirir.
+    [UserMapping(Default = false)]
+    private static string ResolveContentType(string originalFileName)
+        => MimeTypes.GetMimeType(originalFileName);
 }

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Byd.CoreExtensions.Managers;
 using Byd.CoreExtensions.Providers;
+using Byd.FileManagement.Consts;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.ExceptionCodes;
 using Byd.FileManagement.Interfaces.StoredFiles;
@@ -13,12 +14,14 @@ using Volo.Abp;
 namespace Byd.FileManagement.Managers.StoredFiles;
 
 /// <summary>
-/// Saklanan dosya kurallarini ve varlik guard'larini yonetir.
+/// Saklanan dosya kurallarini, varlik guard'larini ve durum gecislerini yonetir.
 /// </summary>
 // islevi: Yazma on kosullarini dogrular, dosya adini kanoniklestirir, modul adini host
-// beyanindan yazar, blob adini uretir ve content type'in cozulebilirligini dogrular.
+// beyanindan yazar, blob adini uretir, content type'in cozulebilirligini dogrular ve onay
+// gecisini yapar.
 // sistemdeki gorevi: AppService'i is kararindan ve data-shell entity'yi davranistan uzak tutan
-// domain sahibidir.
+// domain sahibidir. Byte yazma/silme burada degildir; o is depolama sinirinin isidir ve Domain
+// hicbir saglayici bagimliligi tasimaz.
 public class StoredFileManager(
     IStoredFileRepository repository,
     FileCategoryManager categoryManager)
@@ -32,7 +35,7 @@ public class StoredFileManager(
         => (await TryGetByIdAsync(id, throwIfNotExists: true, cancellationToken))!;
 
     // Yazma on kosulu: dosyanin baglanacagi kategori gercekten var olmali.
-    // Create modelini normalize edip yeni kaydi kurar.
+    // Create modelini normalize edip byte'lari henuz yazilmamis yeni kaydi kurar.
     public virtual async Task<StoredFile> CreateAsync(
         StoredFileCreateModel model,
         CancellationToken cancellationToken)
@@ -49,6 +52,7 @@ public class StoredFileManager(
             ModuleName = NormalizeRequiredText(ModuleNameProvider.Value),
             ExternalId = model.ExternalId,
             CategoryId = model.CategoryId,
+            StatusId = StoredFileStatusConsts.PendingId,
             // Blob adi opak ve carpismasizdir; orijinal ad hicbir zaman adresleme icin kullanilmaz.
             BlobName = id.ToString("N"),
             OriginalFileName = originalFileName,
@@ -59,6 +63,13 @@ public class StoredFileManager(
             // tuketmedigimiz referans core'da duruyor; kaynak baglanana kadar kolon null tasir.
             TenantId = CurrentTenant.Id
         };
+    }
+
+    // Byte'lar depoya yazildiktan sonra kaydi okuma uclarina acar.
+    public virtual void MarkAsApproved(StoredFile entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        entity.StatusId = StoredFileStatusConsts.ApprovedId;
     }
 
     // Icerik tipi kolonda tutulmaz; her okumada dosya adindan cozulur. Bu yuzden cozulemeyen

@@ -1,10 +1,14 @@
 using System;
+using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Byd.CoreExtensions.EntityFrameworkCore;
+using Byd.FileManagement.BlobStoring;
 using Volo.Abp;
+using Volo.Abp.BlobStoring;
+using Volo.Abp.BlobStoring.FileSystem;
 using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.Modularity;
@@ -20,9 +24,12 @@ namespace Byd.FileManagement.EntityFrameworkCore;
 // DbContext'lerin semasini orada kurar ve acilista veri tohumlayicilarini calistirir.
 // sistemdeki gorevi: Testler uretimdeki saglayiciya karsi kosar; bellek ici bir saglayici
 // kullanilmaz, cunku tuketilen core modulu PostgreSQL saglayicisini host genelinde beyan eder.
+// Byte deposu icin MinIO yerine dosya sistemi saglayicisi secilir: saglayici secimi host'un
+// karari oldugu icin test host'u da baska bir saglayici secebilir. Modul farki gormez.
 [DependsOn(
     typeof(FileManagementApplicationTestModule),
-    typeof(FileManagementEntityFrameworkCoreModule)
+    typeof(FileManagementEntityFrameworkCoreModule),
+    typeof(AbpBlobStoringFileSystemModule)
 )]
 public class FileManagementEntityFrameworkCoreTestModule : AbpModule
 {
@@ -30,6 +37,7 @@ public class FileManagementEntityFrameworkCoreTestModule : AbpModule
         "Host=localhost;Port=5432;Database={0};Username=postgres;Password=postgres";
 
     private string _connectionString = string.Empty;
+    private string _blobRootPath = string.Empty;
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -42,6 +50,21 @@ public class FileManagementEntityFrameworkCoreTestModule : AbpModule
             options.ConnectionStrings.Default = _connectionString;
         });
 
+        ConfigureBlobStorage();
+    }
+
+    // Saglayici secimi host beyanidir; test host'u byte'lari gecici bir klasore yazar.
+    private void ConfigureBlobStorage()
+    {
+        _blobRootPath = Path.Combine(Path.GetTempPath(), $"FileManagementTests_{Guid.NewGuid():N}");
+
+        Configure<AbpBlobStoringOptions>(options =>
+        {
+            options.Containers.Configure<StoredFileBlobContainer>(container =>
+            {
+                container.UseFileSystem(fileSystem => fileSystem.BasePath = _blobRootPath);
+            });
+        });
     }
 
     // Veri tohumlama burada calisir; sema ve baglanti yalniz bu modulde vardir.
@@ -50,12 +73,18 @@ public class FileManagementEntityFrameworkCoreTestModule : AbpModule
         SeedTestData(context);
     }
 
-    // Kosuya ozel veritabani host kapanirken dusurulur; sunucuda artik veritabani birikmez.
+    // Kosuya ozel veritabani ve byte klasoru host kapanirken dusurulur; artik birikmez.
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        using var dbContext = CreateDbContext<FileManagementDbContext>(_connectionString);
+        using (var dbContext = CreateDbContext<FileManagementDbContext>(_connectionString))
+        {
+            dbContext.Database.EnsureDeleted();
+        }
 
-        dbContext.Database.EnsureDeleted();
+        if (Directory.Exists(_blobRootPath))
+        {
+            Directory.Delete(_blobRootPath, recursive: true);
+        }
     }
 
     // Her test host'u icin izole bir veritabani kurar; kosular birbirinin verisini gormez.

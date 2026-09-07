@@ -9,6 +9,7 @@
     "Permission:FileCategories.Manage": "Dosya kategorilerini yönetme",
     "Permission:StoredFiles": "Saklanan dosyalar",
     "Permission:StoredFiles.View": "Saklanan dosyaları görüntüleme",
+    "Permission:StoredFiles.Manage": "Saklanan dosyaları yükleme ve silme",
     "FileManagement.StoredFile:00001": "Dosyanın içerik türü adından çözülemedi.",
     "FileManagement.FileCategory:00001": "Dosya kategorisi adı zorunludur.",
     "FileManagement.FileCategory:00002": "Dosya kategorisi adı 128 karakteri aşamaz."

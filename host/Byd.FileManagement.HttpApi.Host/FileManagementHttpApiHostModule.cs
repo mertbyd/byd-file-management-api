@@ -87,6 +87,7 @@ public class FileManagementHttpApiHostModule : AbpModule
         // Uclardaki [Authorize] metadatasi bu middleware olmadan calismaz; yoksa istek 500 doner.
         app.UseAuthorization();
         app.UseCoreExtensions();//core module
+        app.UseFileManagement();//bu modulun acilis isi: dosya durumu lookup'i
         app.UseConfiguredEndpoints();
         return Task.CompletedTask;
     }

@@ -9,6 +9,7 @@
     "Permission:FileCategories.Manage": "Manage file categories",
     "Permission:StoredFiles": "Stored files",
     "Permission:StoredFiles.View": "View stored files",
+    "Permission:StoredFiles.Manage": "Upload and delete stored files",
     "FileManagement.StoredFile:00001": "The content type of the file could not be resolved from its name.",
     "FileManagement.FileCategory:00001": "File category name is required.",
     "FileManagement.FileCategory:00002": "File category name cannot exceed 128 characters."

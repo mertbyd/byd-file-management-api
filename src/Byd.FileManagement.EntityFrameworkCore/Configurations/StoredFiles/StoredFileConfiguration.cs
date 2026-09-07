@@ -35,6 +35,12 @@ public sealed class StoredFileConfiguration : IEntityTypeConfiguration<StoredFil
             .HasForeignKey(entity => entity.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Durum lookup'i sistem verisidir; silinmesi dosya kayitlarini adressiz birakir.
+        builder.HasOne<StoredFileStatus>()
+            .WithMany()
+            .HasForeignKey(entity => entity.StatusId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Bir is kaydinin ayni kategoride birden fazla dosyasi olabilir: kategori bir belge
         // turudur, tek dosyalik bir yuva degil. Indeks okuma icindir, teklik zorlamaz.
         // ExternalId bas kolon oldugu icin yalniz is kaydiyla yapilan sorgular da bunu kullanir.

@@ -20,6 +20,8 @@ public class StoredFile : AuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? TenantId { get; internal set; }
     // Kaydin ait oldugu organizasyon; kapsam bilgisi olarak tasinir.
     public Guid? OrganizationId { get; internal set; }
+    // Kaydin onay durumu; okuma uclari yalniz Onayli kayitlari dondurur.
+    public Guid StatusId { get; internal set; }
     // Dosyanin bagli oldugu FileCategory kaydinin kimligi.
     public Guid CategoryId { get; internal set; }
     // DTO'daki CategoryId-CategoryName ciftinin guncel ad kaynagidir.

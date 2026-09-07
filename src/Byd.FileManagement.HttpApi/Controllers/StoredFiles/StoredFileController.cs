@@ -45,6 +45,33 @@ public class StoredFileController : FileManagementController
         return result;
     }
 
+    // Byte'lari depoya yazar ve okunabilir dosya kaydini dondurur.
+    [HttpPost(StoredFileRoutes.Upload)]
+    [Authorize(FileManagementPermissions.StoredFiles.Manage)]
+    public virtual async Task<Result<StoredFileDto>> Upload([FromBody] UploadStoredFileDto input)
+    {
+        var result = await AppService.UploadAsync(input);
+        return result;
+    }
+
+    // Kimligi verilen dosyanin byte'larini depodan okur.
+    [HttpGet(StoredFileRoutes.Download)]
+    [Authorize(FileManagementPermissions.StoredFiles.View)]
+    public virtual async Task<Result<DownloadStoredFileDto>> Download(Guid id)
+    {
+        var result = await AppService.DownloadAsync(id);
+        return result;
+    }
+
+    // Kimligi verilen dosyanin kaydini ve byte'larini siler.
+    [HttpDelete(StoredFileRoutes.ById)]
+    [Authorize(FileManagementPermissions.StoredFiles.Manage)]
+    public virtual async Task<Result> Delete(Guid id)
+    {
+        await AppService.DeleteAsync(id);
+        return Result.NoContent();
+    }
+
     // Kimligi verilen saklanan dosya kaydini getirir.
     [HttpGet(StoredFileRoutes.ById)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]

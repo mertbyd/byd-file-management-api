@@ -19,7 +19,8 @@ namespace Byd.FileManagement.EntityFrameworkCore.StoredFiles;
 /// StoredFile okuma sorgularini dogrular.
 /// </summary>
 // islevi: Toplu is kaydi okumasinin tek sorguda dogru kumeyi dondurdugunu, bir kategorinin
-// birden fazla dosya tasiyabildigini ve okumalarin tenant sinirini gecmedigini kanitlar.
+// birden fazla dosya tasiyabildigini, onaysiz kaydin okumada gorunmedigini ve okumalarin tenant
+// sinirini gecmedigini kanitlar.
 // sistemdeki gorevi: (ExternalId, CategoryId) adreslemesinin cok dosyali sozlesmesini ve
 // StoredFile'in IMultiTenant kapsamini koruyan testtir.
 public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBase
@@ -134,6 +135,33 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
         });
     }
 
+    // Yarim kalmis bir yuklemenin okuma yollarinda gorunmedigini dogrular.
+    [Fact]
+    public async Task Should_hide_pending_file_from_reads()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var repository = GetRequiredService<IStoredFileRepository>();
+            var manager = GetRequiredService<StoredFileManager>();
+            var category = await CreateCategoryAsync();
+            var externalId = Guid.NewGuid();
+            // Onaylanmadan birakilan kayit, byte'lari yazilamamis bir yuklemeyi temsil eder.
+            var pending = await manager.CreateAsync(
+                StoredFileTestDataBuilder.Build(externalId, category.Id),
+                CancellationToken.None);
+            await repository.InsertAsync(pending, autoSave: true, cancellationToken: CancellationToken.None);
+
+            var readCategory = await repository.GetListByCategoryAsync(
+                externalId,
+                category.Id,
+                CancellationToken.None);
+            var readList = await repository.GetListByExternalIdsAsync([externalId], CancellationToken.None);
+
+            readCategory.ShouldBeEmpty();
+            readList.ShouldBeEmpty();
+        });
+    }
+
     // Verilen adrese kalici bir dosya kaydi yazar.
     private async Task<StoredFile> InsertFileAsync(Guid externalId, Guid categoryId)
     {
@@ -142,6 +170,8 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
         var file = await manager.CreateAsync(
             StoredFileTestDataBuilder.Build(externalId, categoryId),
             CancellationToken.None);
+        // Okuma yollari yalniz onaylanmis kayitlari dondurur; test verisi de yukleme akisi gibi onaylanir.
+        manager.MarkAsApproved(file);
         await repository.InsertAsync(file, autoSave: true, cancellationToken: CancellationToken.None);
 
         return file;
