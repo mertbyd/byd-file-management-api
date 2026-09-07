@@ -1,3 +1,4 @@
+﻿using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -11,6 +12,7 @@ using Byd.FileManagement.EntityFrameworkCore;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Serilog;
+using Volo.Abp.Authorization;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
@@ -46,11 +48,24 @@ public class FileManagementHttpApiHostModule : AbpModule
             options.EnvironmentName = environmentName;
         });
 
+        ConfigureAuthorization(context);
+
         context.Services.AddAbpSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo { Title = "FileManagement API", Version = "v1" });
             options.CustomSchemaIds(type => type.FullName);
         });
+    }
+
+    // Bu host'un onunde henuz bir kimlik dogrulama sunucusu yok. Development'ta yetki kontrolu
+    // her zaman gecer ki uclar lokalde denenebilsin; diger ortamlarda hicbir sey gevsetilmez ve
+    // gercek bir saglayici baglanana kadar korumali uclar kapali kalir.
+    private static void ConfigureAuthorization(ServiceConfigurationContext context)
+    {
+        if (context.Services.GetHostingEnvironment().IsDevelopment())
+        {
+            context.Services.AddAlwaysAllowAuthorization();
+        }
     }
 
     // HTTP pipeline'ini kurar; core mukerrer istek korumasi rate limiter'dan sonra, endpointlerden once takilir.
@@ -69,7 +84,9 @@ public class FileManagementHttpApiHostModule : AbpModule
             options.SwaggerEndpoint("/swagger/v1/swagger.json", "FileManagement API");
         });
         app.UseRateLimiter();
-        app.UseCoreExtensions();//core module 
+        // Uclardaki [Authorize] metadatasi bu middleware olmadan calismaz; yoksa istek 500 doner.
+        app.UseAuthorization();
+        app.UseCoreExtensions();//core module
         app.UseConfiguredEndpoints();
         return Task.CompletedTask;
     }

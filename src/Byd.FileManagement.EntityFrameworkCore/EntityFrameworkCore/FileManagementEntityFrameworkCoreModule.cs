@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Byd.CoreExtensions.EntityFrameworkCore;
+using Byd.CoreExtensions.Interfaces;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.Modularity;
@@ -32,5 +33,7 @@ public class FileManagementEntityFrameworkCoreModule : AbpModule
         {
             options.AddDefaultRepositories(includeAllEntities: true);
         });
+
+        context.Services.AddTransient<IModuleSettingRepository, EfCoreModuleSettingRepository>();
     }
 }

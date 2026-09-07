@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using Byd.CoreExtensions;
+using Volo.Abp.Application;
 using Volo.Abp.Mapperly;
 using Volo.Abp.Modularity;
-using Volo.Abp.Application;
 
-using Byd.CoreExtensions;
 namespace Byd.FileManagement;
 
 [DependsOn(

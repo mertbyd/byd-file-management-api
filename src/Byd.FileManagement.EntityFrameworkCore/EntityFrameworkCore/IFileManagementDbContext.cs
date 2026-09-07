@@ -1,4 +1,6 @@
-﻿using Volo.Abp.Data;
+using Microsoft.EntityFrameworkCore;
+using Byd.FileManagement.Entities.FileCategories;
+using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 
 namespace Byd.FileManagement.EntityFrameworkCore;
@@ -6,7 +8,6 @@ namespace Byd.FileManagement.EntityFrameworkCore;
 [ConnectionStringName(FileManagementDbProperties.ConnectionStringName)]
 public interface IFileManagementDbContext : IEfCoreDbContext
 {
-    /* Add DbSet for each Aggregate Root here. Example:
-     * DbSet<Question> Questions { get; }
-     */
+    // Dosya kategorisi aggregate setini repository uygulamasina acar.
+    DbSet<FileCategory> FileCategories { get; }
 }

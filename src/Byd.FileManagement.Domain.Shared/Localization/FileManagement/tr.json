@@ -2,6 +2,12 @@
   "culture": "tr",
   "texts": {
     "MyAccount":  "Hesabım",
-    "SamplePageMessage": "FileManagement modulünden örnek bir sayfa"
+    "SamplePageMessage": "FileManagement modulünden örnek bir sayfa",
+    "Permission:FileManagement": "Dosya yönetimi",
+    "Permission:FileCategories": "Dosya kategorileri",
+    "Permission:FileCategories.View": "Dosya kategorilerini görüntüleme",
+    "Permission:FileCategories.Manage": "Dosya kategorilerini yönetme",
+    "FileManagement.FileCategory:00001": "Dosya kategorisi adı zorunludur.",
+    "FileManagement.FileCategory:00002": "Dosya kategorisi adı 128 karakteri aşamaz."
   }
 }
