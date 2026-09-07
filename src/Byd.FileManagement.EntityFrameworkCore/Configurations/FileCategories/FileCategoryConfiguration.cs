@@ -9,7 +9,7 @@ namespace Byd.FileManagement.EntityFrameworkCore.Configurations.FileCategories;
 /// <summary>
 /// FileCategory entity'sinin EF Core tablo ve kolon sozlesmesini tanimlar.
 /// </summary>
-// islevi: Dosya kategorisi tablo adini, semasini ve kolon kisitlarini map eder.
+// islevi: Dosya kategorisi tablo adini, semasini, kolon kisitlarini ve ad benzersizligini map eder.
 // sistemdeki gorevi: FileCategory tablosunun PostgreSQL semasindaki tek EF konfigurasyon sahibidir.
 public sealed class FileCategoryConfiguration : IEntityTypeConfiguration<FileCategory>
 {
@@ -21,5 +21,12 @@ public sealed class FileCategoryConfiguration : IEntityTypeConfiguration<FileCat
         builder.Property(entity => entity.Name)
             .IsRequired()
             .HasMaxLength(FileCategoryConsts.MaxNameLength);
+
+        // Ad, tuketicinin dosyalarini adresledigi anahtardir; ayni adin ikinci kez acilmasi
+        // dosyalari fark edilmeden iki kategoriye bolerdi. Manager ayni kurali is hatasi olarak
+        // verir, bu indeks son savunmadir.
+        builder.HasIndex(entity => entity.Name)
+            .IsUnique()
+            .HasDatabaseName(FileCategoryConsts.NameIndex);
     }
 }

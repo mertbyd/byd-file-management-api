@@ -52,7 +52,7 @@ public class FileCategoryAppService : FileManagementAppService, IFileCategoryApp
         var cancellationToken = CancellationTokenProvider.Token;
         await CreateValidator.ValidateAndThrowAsync(input, cancellationToken);
         var model = Mapper.Map(input);
-        var entity = Manager.Create(model);
+        var entity = await Manager.CreateAsync(model, cancellationToken);
         await Repository.InsertAsync(entity, autoSave: true, cancellationToken: cancellationToken);
         return Mapper.Map(entity);
     }
@@ -66,7 +66,7 @@ public class FileCategoryAppService : FileManagementAppService, IFileCategoryApp
         await UpdateValidator.ValidateAndThrowAsync(input, cancellationToken);
         var entity = await Manager.EnsureExistsAsync(id, cancellationToken);
         var model = Mapper.Map(input);
-        Manager.Update(entity, model);
+        await Manager.UpdateAsync(entity, model, cancellationToken);
         await Repository.UpdateAsync(entity, autoSave: true, cancellationToken: cancellationToken);
         return Mapper.Map(entity);
     }

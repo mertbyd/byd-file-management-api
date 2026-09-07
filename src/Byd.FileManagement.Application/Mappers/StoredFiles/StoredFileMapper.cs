@@ -1,0 +1,21 @@
+﻿using System.Collections.Generic;
+using Byd.FileManagement.Dtos.StoredFiles;
+using Byd.FileManagement.Entities.StoredFiles;
+using Riok.Mapperly.Abstractions;
+
+namespace Byd.FileManagement.Mappers.StoredFiles;
+
+/// <summary>
+/// Saklanan dosya entity ve DTO eslemelerini tanimlar.
+/// </summary>
+// islevi: Tekil ve liste repository ciktilarini Mapperly tarafindan uretilen kodla donusturur.
+// sistemdeki gorevi: Dosya metadata okuma katmanlari arasindaki alan tasimanin tek sahibidir.
+[Mapper]
+public partial class StoredFileMapper
+{
+    // Tek saklanan dosya entity'sini public cevap sozlesmesine esler.
+    public partial StoredFileDto Map(StoredFile source);
+
+    // Saklanan dosya entity listesini public cevap listesine esler.
+    public partial List<StoredFileDto> Map(List<StoredFile> source);
+}

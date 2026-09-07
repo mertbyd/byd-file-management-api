@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Byd.CoreExtensions.EntityFrameworkCore;
 using Byd.CoreExtensions.Extensions;
 using Byd.FileManagement.Entities.FileCategories;
+using Byd.FileManagement.Entities.StoredFiles;
 using Volo.Abp.Data;
 
 namespace Byd.FileManagement.EntityFrameworkCore;
@@ -11,6 +12,9 @@ public class FileManagementDbContext : BydDbContext<FileManagementDbContext>, IF
 {
     // FileCategory repository'sinin calistigi aggregate setidir.
     public DbSet<FileCategory> FileCategories { get; set; }
+
+    // StoredFile repository'sinin calistigi aggregate setidir.
+    public DbSet<StoredFile> StoredFiles { get; set; }
 
     public FileManagementDbContext(DbContextOptions<FileManagementDbContext> options)
         : base(options)

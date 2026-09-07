@@ -56,7 +56,7 @@ public class FileManagementHttpApiHostModule : AbpModule
             options.CustomSchemaIds(type => type.FullName);
         });
     }
-
+    //todo auth gelince kapatılacak 
     // Bu host'un onunde henuz bir kimlik dogrulama sunucusu yok. Development'ta yetki kontrolu
     // her zaman gecer ki uclar lokalde denenebilsin; diger ortamlarda hicbir sey gevsetilmez ve
     // gercek bir saglayici baglanana kadar korumali uclar kapali kalir.
