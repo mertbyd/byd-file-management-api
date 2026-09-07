@@ -16,10 +16,10 @@ namespace Byd.FileManagement.EntityFrameworkCore.Repositories.StoredFiles;
 /// <summary>
 /// IStoredFileRepository sozlesmesini EF Core DbContext'e baglar.
 /// </summary>
-// islevi: StoredFile icin generic, bulk, DataTable ve slot sorgularini saglar.
+// islevi: StoredFile icin generic, bulk, DataTable ve kategori kirilimli okuma sorgularini saglar.
 // sistemdeki gorevi: IStoredFileRepository sozlesmesinin EfExtendedRepository tabanli provider uygulamasidir.
 // mirastan gelen: CRUD, filtreli liste, sayim, kullanim kontrolu ve bulk yazma yuzeyleri.
-// burada yazilan: is kaydi kimlikleriyle toplu okuma ve tekil slot sorgusu.
+// burada yazilan: is kaydi kimlikleriyle toplu okuma ve kategori kirilimli okuma.
 [ExposeServices(typeof(IStoredFileRepository))]
 public class EfCoreStoredFileRepository
     : EfExtendedRepository<FileManagementDbContext, StoredFile, Guid>,
@@ -47,14 +47,14 @@ public class EfCoreStoredFileRepository
             .ToListAsync(cancellationToken);
     }
 
-    // Slotu isgal eden kaydi getirir.
-    public virtual async Task<StoredFile?> GetBySlotAsync(
+    // Is kaydinin verilen kategorideki dosyalarini getirir.
+    public virtual async Task<List<StoredFile>> GetListByCategoryAsync(
         Guid externalId,
         Guid categoryId,
         CancellationToken cancellationToken = default)
     {
-        return await InSlot(await WithDetailsAsync(), externalId, categoryId)
-            .SingleOrDefaultAsync(cancellationToken);
+        return await InCategory(await WithDetailsAsync(), externalId, categoryId)
+            .ToListAsync(cancellationToken);
     }
 
     // Filtreli listede kategori adini ayni sorguda getirir.
@@ -74,7 +74,7 @@ public class EfCoreStoredFileRepository
         return query.Where(entity => ids.Contains(entity.ExternalId));
     }
 
-    private static IQueryable<StoredFile> InSlot(
+    private static IQueryable<StoredFile> InCategory(
         IQueryable<StoredFile> query,
         Guid externalId,
         Guid categoryId)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Byd.FileManagement.Entities.FileCategories;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.EntityFrameworkCore.FileCategories;
@@ -11,16 +10,18 @@ using Byd.FileManagement.Managers.FileCategories;
 using Byd.FileManagement.Managers.StoredFiles;
 using Byd.FileManagement.Mappers.StoredFiles;
 using Shouldly;
+using Volo.Abp.MultiTenancy;
 using Xunit;
 
 namespace Byd.FileManagement.EntityFrameworkCore.StoredFiles;
 
 /// <summary>
-/// StoredFile slot adresleme davranislarini dogrular.
+/// StoredFile okuma sorgularini dogrular.
 /// </summary>
-// islevi: Toplu is kaydi okumasinin tek sorguda dogru kumeyi dondurdugunu, slot adresinin tek dosya
-// verdigini ve ayni slota ikinci kaydin veritabani tarafindan reddedildigini kanitlar.
-// sistemdeki gorevi: (ExternalId, CategoryId) adresleme sozlesmesini koruyan testtir.
+// islevi: Toplu is kaydi okumasinin tek sorguda dogru kumeyi dondurdugunu, bir kategorinin
+// birden fazla dosya tasiyabildigini ve okumalarin tenant sinirini gecmedigini kanitlar.
+// sistemdeki gorevi: (ExternalId, CategoryId) adreslemesinin cok dosyali sozlesmesini ve
+// StoredFile'in IMultiTenant kapsamini koruyan testtir.
 public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBase
 {
     // Toplu okumanin yalniz istenen is kayitlarinin dosyalarini dondurdugunu dogrular.
@@ -47,46 +48,93 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
         });
     }
 
-    // Slot adresinin tek dosya dondurdugunu, bos slotta null verdigini dogrular.
+    // Bir is kaydinin ayni kategoride birden fazla dosya tasiyabildigini dogrular.
+    // Kategori bir belge turudur: bir isin birden cok is dosyasi olabilir.
     [Fact]
-    public async Task Should_return_single_file_for_slot_address()
+    public async Task Should_return_every_file_of_a_category()
     {
         await WithUnitOfWorkAsync(async () =>
         {
             var repository = GetRequiredService<IStoredFileRepository>();
             var category = await CreateCategoryAsync();
             var externalId = Guid.NewGuid();
-            var file = await InsertFileAsync(externalId, category.Id);
+            var first = await InsertFileAsync(externalId, category.Id);
+            var second = await InsertFileAsync(externalId, category.Id);
 
-            var found = await repository.GetBySlotAsync(externalId, category.Id, CancellationToken.None);
-            var empty = await repository.GetBySlotAsync(Guid.NewGuid(), category.Id, CancellationToken.None);
+            var files = await repository.GetListByCategoryAsync(
+                externalId,
+                category.Id,
+                CancellationToken.None);
 
-            found.ShouldNotBeNull();
-            found.Id.ShouldBe(file.Id);
-            found.Category.Name.ShouldBe(category.Name);
-            new StoredFileMapper().Map(found).CategoryName.ShouldBe(category.Name);
-            empty.ShouldBeNull();
+            files.Count.ShouldBe(2);
+            files.ShouldContain(item => item.Id == first.Id);
+            files.ShouldContain(item => item.Id == second.Id);
+            files[0].Category.Name.ShouldBe(category.Name);
+            new StoredFileMapper().Map(files[0]).CategoryName.ShouldBe(category.Name);
         });
     }
 
-    // Ayni slota ikinci kaydin veritabani tarafindan reddedildigini dogrular.
+    // Dosyasi olmayan kategori adresinin bos liste dondurdugunu dogrular.
     [Fact]
-    public async Task Should_reject_second_file_in_same_slot()
+    public async Task Should_return_empty_list_for_category_without_files()
     {
-        var externalId = Guid.NewGuid();
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var repository = GetRequiredService<IStoredFileRepository>();
+            var category = await CreateCategoryAsync();
 
-        // Hata unit of work'un disina cikarilir; iceride yakalansaydi basarisiz insert
-        // takip edilmeye devam eder ve UOW kapanirken ikinci kez patlardi.
-        await Should.ThrowAsync<DbUpdateException>(async () =>
-            await WithUnitOfWorkAsync(async () =>
-            {
-                var category = await CreateCategoryAsync();
-                await InsertFileAsync(externalId, category.Id);
-                await InsertFileAsync(externalId, category.Id);
-            }));
+            var files = await repository.GetListByCategoryAsync(
+                Guid.NewGuid(),
+                category.Id,
+                CancellationToken.None);
+
+            files.ShouldBeEmpty();
+        });
     }
 
-    // Verilen slot adresine kalici bir dosya kaydi yazar.
+    // Bir tenant'in dosyasinin baska bir tenant'in okumasinda gorunmedigini dogrular.
+    // StoredFile IMultiTenant oldugu icin kosulu ABP global filtresi ekler; bu test o filtrenin
+    // gercekten kuruldugunu kanitlar, cunku adresi bilen herkes aksi halde dosyayi okurdu.
+    [Fact]
+    public async Task Should_not_return_file_of_another_tenant()
+    {
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        var owner = Guid.NewGuid();
+        var stranger = Guid.NewGuid();
+        var externalId = Guid.NewGuid();
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var repository = GetRequiredService<IStoredFileRepository>();
+            var category = await CreateCategoryAsync();
+            using (currentTenant.Change(owner))
+            {
+                await InsertFileAsync(externalId, category.Id);
+            }
+
+            using (currentTenant.Change(stranger))
+            {
+                var files = await repository.GetListByCategoryAsync(
+                    externalId,
+                    category.Id,
+                    CancellationToken.None);
+
+                files.ShouldBeEmpty();
+            }
+
+            using (currentTenant.Change(owner))
+            {
+                var files = await repository.GetListByCategoryAsync(
+                    externalId,
+                    category.Id,
+                    CancellationToken.None);
+
+                files.Count.ShouldBe(1);
+            }
+        });
+    }
+
+    // Verilen adrese kalici bir dosya kaydi yazar.
     private async Task<StoredFile> InsertFileAsync(Guid externalId, Guid categoryId)
     {
         var manager = GetRequiredService<StoredFileManager>();

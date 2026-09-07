@@ -10,7 +10,7 @@ public static class StoredFileRoutes
     public const string Root = "api/file-management/stored-files";
     public const string ById = "{id:guid}";
     public const string ByExternalIds = "by-external-ids";
-    public const string Slot = "slot";
+    public const string ByCategory = "by-category";
     public const string FilteredList = "filtered-list";
     public const string FilteredCount = "filtered-count";
 }

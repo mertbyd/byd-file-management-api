@@ -9,7 +9,7 @@ namespace Byd.FileManagement.Services.StoredFiles;
 /// <summary>
 /// Saklanan dosya metadata okuma kullanim senaryolarini tanimlar.
 /// </summary>
-// islevi: Tekil okuma, slot okumasi, toplu okuma, filtreli liste ve sayim kontratini acar.
+// islevi: Tekil okuma, kategori okumasi, toplu okuma, filtreli liste ve sayim kontratini acar.
 // sistemdeki gorevi: Controller ile Application implementasyonu arasindaki public servis siniridir.
 public interface IStoredFileAppService : IApplicationService
 {
@@ -19,8 +19,8 @@ public interface IStoredFileAppService : IApplicationService
     // Verilen is kayitlarinin dosyalarini toplu getirir.
     Task<List<StoredFileDto>> GetListByExternalIdsAsync(IEnumerable<Guid> externalIds);
 
-    // Is kaydi ve kategoriyle adreslenen dosyayi getirir.
-    Task<StoredFileDto> GetBySlotAsync(Guid externalId, Guid categoryId);
+    // Bir is kaydinin verilen kategorideki dosyalarini getirir.
+    Task<List<StoredFileDto>> GetListByCategoryAsync(Guid externalId, Guid categoryId);
 
     // Filtre, siralama ve sayfalama uygulanmis saklanan dosya listesini getirir.
     Task<List<StoredFileDto>> GetFilteredListAsync(StoredFileListInput input);

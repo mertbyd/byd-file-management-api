@@ -10,8 +10,8 @@ namespace Byd.FileManagement.EntityFrameworkCore.StoredFiles;
 // sistemdeki gorevi: Her testin ayni on kosul bloklarini tekrar yazmasini onleyen test veri kaynagidir.
 public static class StoredFileTestDataBuilder
 {
-    // Verilen slot adresiyle gecerli bir create modeli kurar.
-    // Kategori kimligi disaridan gelir; modul kategori seed etmez, cagiran kendi slotunu acar.
+    // Verilen is kaydi ve kategori adresiyle gecerli bir create modeli kurar.
+    // Kategori kimligi disaridan gelir; modul kategori seed etmez, cagiran kendi kategorisini acar.
     public static StoredFileCreateModel Build(Guid externalId, Guid categoryId)
         => new()
         {

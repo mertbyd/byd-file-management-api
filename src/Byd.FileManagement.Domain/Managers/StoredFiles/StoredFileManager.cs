@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Byd.CoreExtensions.ExceptionCodes;
 using Byd.CoreExtensions.Managers;
 using Byd.CoreExtensions.Providers;
 using Byd.FileManagement.Entities.StoredFiles;
@@ -32,15 +31,7 @@ public class StoredFileManager(
     public virtual async Task<StoredFile> EnsureExistsAsync(Guid id, CancellationToken cancellationToken)
         => (await TryGetByIdAsync(id, throwIfNotExists: true, cancellationToken))!;
 
-    // Slot bos ise ortak lokalize NotFound hatasini firlatir.
-    public virtual async Task<StoredFile> EnsureSlotExistsAsync(
-        Guid externalId,
-        Guid categoryId,
-        CancellationToken cancellationToken)
-        => await repository.GetBySlotAsync(externalId, categoryId, cancellationToken)
-           ?? throw new BusinessException(GeneralExceptionCodes.EntityNotFound);
-
-    // Yazma on kosulu: dosyanin baglanacagi kategori slotu gercekten var olmali.
+    // Yazma on kosulu: dosyanin baglanacagi kategori gercekten var olmali.
     // Create modelini normalize edip yeni kaydi kurar.
     public virtual async Task<StoredFile> CreateAsync(
         StoredFileCreateModel model,
@@ -61,7 +52,9 @@ public class StoredFileManager(
             // Blob adi opak ve carpismasizdir; orijinal ad hicbir zaman adresleme icin kullanilmaz.
             BlobName = id.ToString("N"),
             OriginalFileName = originalFileName,
-            // Kapsam cagirandan alinmaz; tenant ortam baglamindan okunur.
+            // Kapsam cagirandan alinmaz; tenant ortam baglamindan okunur. ABP de IMultiTenant
+            // kaydi eklerken ayni degeri yazar; burada aciktan yazilir ki Manager'in dondurdugu
+            // entity kaydedilmeden once de kendi kapsamini tasisin.
             // OrganizationId su an bos kalir: ortam baglamini veren ICurrentOrganizationUnit
             // tuketmedigimiz referans core'da duruyor; kaynak baglanana kadar kolon null tasir.
             TenantId = CurrentTenant.Id

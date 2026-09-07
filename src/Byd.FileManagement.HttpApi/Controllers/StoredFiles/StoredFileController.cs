@@ -34,14 +34,14 @@ public class StoredFileController : FileManagementController
         return result;
     }
 
-    // Is kaydi ve kategoriyle adreslenen tek dosyayi getirir.
-    [HttpGet(StoredFileRoutes.Slot)]
+    // Bir is kaydinin verilen kategorideki dosyalarini getirir.
+    [HttpGet(StoredFileRoutes.ByCategory)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<StoredFileDto>> GetBySlot(
+    public virtual async Task<Result<List<StoredFileDto>>> GetListByCategory(
         [FromQuery] Guid externalId,
         [FromQuery] Guid categoryId)
     {
-        var result = await AppService.GetBySlotAsync(externalId, categoryId);
+        var result = await AppService.GetListByCategoryAsync(externalId, categoryId);
         return result;
     }
 

@@ -11,7 +11,8 @@ namespace Byd.FileManagement.Managers.FileCategories;
 /// <summary>
 /// Dosya kategorisi normalizasyon, varlik ve mutasyon kurallarini yonetir.
 /// </summary>
-// islevi: Kategori adini kanoniklestirir, entity kurar ve mevcut entity alanlarini degistirir.
+// islevi: Kategori adini kanoniklestirir, ad benzersizligini dogrular, entity kurar ve mevcut
+// entity alanlarini degistirir.
 // sistemdeki gorevi: AppService'i is kararindan ve data-shell entity'yi davranistan uzak tutan domain sahibidir.
 public class FileCategoryManager : BaseManager<FileCategory, Guid>
 {
@@ -30,29 +31,41 @@ public class FileCategoryManager : BaseManager<FileCategory, Guid>
     }
 
     // Create modelini normalize edip yeni FileCategory entity'sine donusturur.
-    public virtual FileCategory Create(FileCategoryCreateModel model, Guid? id = null)
+    public virtual async Task<FileCategory> CreateAsync(
+        FileCategoryCreateModel model,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(model);
-        var entity = new FileCategory(id ?? GuidGenerator.Create());
-        Apply(entity, model);
+        var entity = new FileCategory(GuidGenerator.Create());
+        await ApplyAsync(entity, model, cancellationToken);
+
         return entity;
     }
 
     // Update modelini normalize edip mevcut FileCategory alanlarina uygular.
-    public virtual FileCategory Update(
+    public virtual async Task<FileCategory> UpdateAsync(
         FileCategory entity,
-        FileCategoryUpdateModel model)
+        FileCategoryUpdateModel model,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(entity);
         ArgumentNullException.ThrowIfNull(model);
-        Apply(entity, model);
+        await ApplyAsync(entity, model, cancellationToken);
+
         return entity;
     }
 
     // Dogrulanmis input alanlarini FileCategory veri kabuguna uygular.
-    private void Apply(FileCategory entity, FileCategoryInputModel model)
+    // Ad, tuketicinin dosyalarini adresledigi anahtardir: ayni ad ikinci kez acilirsa dosyalar
+    // fark edilmeden iki kategoriye bolunur, bu yuzden benzersizlik yazma aninda zorlanir.
+    private async Task ApplyAsync(
+        FileCategory entity,
+        FileCategoryInputModel model,
+        CancellationToken cancellationToken)
     {
-        entity.Name = NormalizeRequiredText(model.Name);
+        var name = NormalizeRequiredText(model.Name);
+        await CheckAlreadyExistsAsync(other => other.Name == name, entity.Id, cancellationToken);
+        entity.Name = name;
         entity.Code = model.Code;
     }
 }

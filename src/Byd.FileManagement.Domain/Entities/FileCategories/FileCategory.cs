@@ -9,7 +9,7 @@ namespace Byd.FileManagement.Entities.FileCategories;
 /// </summary>
 // islevi: Kategorinin adini ve istege bagli is kodunu kalici olarak tutar.
 // sistemdeki gorevi: Kurallari FileCategoryManager'a birakan ince lookup persistence kabugudur.
-// Bir is kaydinin hangi slotuna ait oldugunu belirler; StoredFile buna baglanir.
+// Bir dosyanin hangi belge turune ait oldugunu belirler; StoredFile buna baglanir.
 public class FileCategory : CreationAuditedEntity<Guid>, ILookup
 {
     // Kategorinin kullaniciya gosterilen adidir.

@@ -9,8 +9,8 @@ namespace Byd.FileManagement.EntityFrameworkCore.Configurations.StoredFiles;
 /// <summary>
 /// StoredFile entity'sinin EF Core tablo, kolon ve indeks sozlesmesini tanimlar.
 /// </summary>
-// islevi: Dosya metadata tablo adini, semasini, alan sinirlarini, kategori iliskisini ve slot
-// indeksini map eder.
+// islevi: Dosya metadata tablo adini, semasini, alan sinirlarini, kategori iliskisini ve okuma
+// indekslerini map eder.
 // sistemdeki gorevi: StoredFile tablosunun PostgreSQL semasindaki tek EF konfigurasyon sahibidir.
 public sealed class StoredFileConfiguration : IEntityTypeConfiguration<StoredFile>
 {
@@ -35,10 +35,13 @@ public sealed class StoredFileConfiguration : IEntityTypeConfiguration<StoredFil
             .HasForeignKey(entity => entity.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Bir is kaydinin bir slotunda tek dosya bulunur; kural veritabaninda zorlanir.
+        // Bir is kaydinin ayni kategoride birden fazla dosyasi olabilir: kategori bir belge
+        // turudur, tek dosyalik bir yuva degil. Indeks okuma icindir, teklik zorlamaz.
+        // ExternalId bas kolon oldugu icin yalniz is kaydiyla yapilan sorgular da bunu kullanir.
         builder.HasIndex(entity => new { entity.ExternalId, entity.CategoryId })
-            .IsUnique()
-            .HasDatabaseName(StoredFileConsts.SlotIndex);
+            .HasDatabaseName(StoredFileConsts.ExternalCategoryIndex);
+
+        // Entity IMultiTenant oldugu icin ABP her sorguya tenant kosulunu ekler; indeks onu karsilar.
         builder.HasIndex(entity => entity.TenantId)
             .HasDatabaseName(StoredFileConsts.TenantIndex);
     }

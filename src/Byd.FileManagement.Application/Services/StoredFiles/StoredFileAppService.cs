@@ -44,11 +44,14 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
         return Mapper.Map(entities);
     }
 
-    // Slot varligini Manager ile dogrular ve dosya metadatasini esler.
-    public virtual async Task<StoredFileDto> GetBySlotAsync(Guid externalId, Guid categoryId)
+    // Is kaydinin verilen kategorideki dosyalarini getirip esler; bos kategori bos liste doner.
+    public virtual async Task<List<StoredFileDto>> GetListByCategoryAsync(Guid externalId, Guid categoryId)
     {
-        var entity = await Manager.EnsureSlotExistsAsync(externalId, categoryId, CancellationTokenProvider.Token);
-        return Mapper.Map(entity);
+        var entities = await Repository.GetListByCategoryAsync(
+            externalId,
+            categoryId,
+            CancellationTokenProvider.Token);
+        return Mapper.Map(entities);
     }
 
     // Liste girdisini dogrular, dinamik sorguyu repository'de calistirir ve sonucu esler.
