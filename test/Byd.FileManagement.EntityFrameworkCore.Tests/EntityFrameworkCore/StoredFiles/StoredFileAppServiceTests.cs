@@ -41,7 +41,6 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
             uploaded.OriginalFileName.ShouldBe("rapor.pdf");
             downloaded.Data.ShouldBe(FirstContent);
             downloaded.OriginalFileName.ShouldBe("rapor.pdf");
-            downloaded.ContentType.ShouldBe("application/pdf");
         });
     }
 

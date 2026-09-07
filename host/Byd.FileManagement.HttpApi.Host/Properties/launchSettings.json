@@ -18,7 +18,7 @@
     "Byd.FileManagement.DemoApp": {
       "commandName": "Project",
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:44348",
+      "applicationUrl": "http://127.0.0.1:5011;https://localhost:44348",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
