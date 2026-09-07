@@ -2,6 +2,12 @@
   "culture": "en",
   "texts": {
     "MyAccount":  "My account",
-    "SamplePageMessage": "A sample page for the FileManagement module"
+    "SamplePageMessage": "A sample page for the FileManagement module",
+    "Permission:FileManagement": "File management",
+    "Permission:FileCategories": "File categories",
+    "Permission:FileCategories.View": "View file categories",
+    "Permission:FileCategories.Manage": "Manage file categories",
+    "FileManagement.FileCategory:00001": "File category name is required.",
+    "FileManagement.FileCategory:00002": "File category name cannot exceed 128 characters."
   }
 }

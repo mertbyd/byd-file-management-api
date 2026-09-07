@@ -1,21 +1,20 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Byd.CoreExtensions.EntityFrameworkCore;
 using Byd.CoreExtensions.Extensions;
+using Byd.FileManagement.Entities.FileCategories;
 using Volo.Abp.Data;
-using Volo.Abp.EntityFrameworkCore;
 
 namespace Byd.FileManagement.EntityFrameworkCore;
 
 [ConnectionStringName(FileManagementDbProperties.ConnectionStringName)]
-public class FileManagementDbContext : AbpDbContext<FileManagementDbContext>, IFileManagementDbContext
+public class FileManagementDbContext : BydDbContext<FileManagementDbContext>, IFileManagementDbContext
 {
-    /* Add DbSet for each Aggregate Root here. Example:
-     * public DbSet<Question> Questions { get; set; }
-     */
+    // FileCategory repository'sinin calistigi aggregate setidir.
+    public DbSet<FileCategory> FileCategories { get; set; }
 
     public FileManagementDbContext(DbContextOptions<FileManagementDbContext> options)
         : base(options)
     {
-
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -23,7 +22,6 @@ public class FileManagementDbContext : AbpDbContext<FileManagementDbContext>, IF
         base.OnModelCreating(builder);
 
         builder.ConfigureFileManagement();
-
         builder.ApplySnakeCaseNaming();
     }
 }
