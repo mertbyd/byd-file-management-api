@@ -10,8 +10,9 @@ namespace Byd.FileManagement.Dtos.StoredFiles;
 // ASP.NET'e bagimli degildir. Kapsam ve depolama alanlari cagirandan alinmaz, sunucu doldurur.
 public class UploadStoredFileDto
 {
-    public byte[] Data { get; set; } = default!;
-    public string FileName { get; set; } = default!;
     public Guid ExternalId { get; set; }
     public Guid CategoryId { get; set; }
+    public byte[] Data { get; set; } = default!;
+    public string FileName { get; set; } = default!;
+ 
 }
