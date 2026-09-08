@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Byd.FileManagement.Dtos.StoredFiles;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.Models.StoredFiles;
@@ -24,5 +24,20 @@ public partial class StoredFileMapper
     public partial StoredFileCreateModel Map(UploadStoredFileDto source);
 
     // Kayit alanlarini depodan okunan byte'larla birlestirip indirme sozlesmesine esler.
+    // ContentType kayitta yoktur; ayni kaynak alandan, asagidaki cozumleyiciyle uretilir.
+    [MapProperty(
+        nameof(StoredFile.OriginalFileName),
+        nameof(DownloadStoredFileDto.ContentType),
+        Use = nameof(ResolveContentType))]
     public partial DownloadStoredFileDto Map(StoredFile source, byte[] data);
+
+    // Dosya adindan MIME turunu uretir. Cozulemeyen uzanti yukleme aninda reddedildigi icin
+    // burada ikinci bir dogrulama yapilmaz.
+    //
+    // Default = false zorunlu: isaretlenmezse Mapperly bu metodu genel bir string->string donusumu
+    // sayar ve mapper'daki butun metin alanlarina uygular; o zaman FileName de MIME turune donusur.
+    // Bu isaretle metot yalnizca yukaridaki MapProperty'nin acikca cagirdigi yerde kullanilir.
+    [UserMapping(Default = false)]
+    private static string ResolveContentType(string originalFileName)
+        => MimeTypes.GetMimeType(originalFileName);
 }

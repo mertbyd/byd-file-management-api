@@ -11,4 +11,6 @@ public static class StoredFileExceptionCodes
 
     // Dosya adinin uzantisi bilinen bir content type'a cozulemedi.
     public const string UnresolvedContentType = Prefix + ":00001";
+
+    public const string DataTooLarge = Prefix + ":00002";
 }

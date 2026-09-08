@@ -1,4 +1,4 @@
-﻿namespace Byd.FileManagement.Consts;
+namespace Byd.FileManagement.Consts;
 
 /// <summary>
 /// Saklanan dosya kaydinin tablo, indeks ve alan sinirlarini tanimlar.
@@ -28,4 +28,9 @@ public static class StoredFileConsts
 
     // Kullanicinin yukledigi ozgun dosya adinin azami uzunlugu.
     public const int MaxOriginalFileNameLength = 260;
+
+    // Yuklenebilir azami dosya boyutu (byte). Deger istek govdesinin bicimine gore secildi:
+    // byte'lar JSON icinde base64 tasindigi icin 20 MB ikili veri yaklasik 27 MB govde eder ve
+    // ASP.NET Core'un varsayilan 30 MB istek govdesi sinirinin altinda kalir.
+    public const int MaxDataLength = 20 * 1024 * 1024;
 }

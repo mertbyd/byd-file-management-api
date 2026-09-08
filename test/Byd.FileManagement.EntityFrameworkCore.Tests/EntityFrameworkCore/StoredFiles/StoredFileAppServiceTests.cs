@@ -44,6 +44,27 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
         });
     }
 
+    // Indirme cevabinin icerik turunu dosya adindan uretip tasidigini dogrular.
+    // Tur veritabaninda tutulmadigi icin bu test aslinda cozumlemenin dogru kaynaktan
+    // beslendigini kanitlar: iki farkli uzanti iki farkli tur uretmelidir.
+    [Fact]
+    public async Task Should_resolve_content_type_from_file_name()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var appService = GetRequiredService<IStoredFileAppService>();
+            var categoryId = await CreateCategoryIdAsync();
+
+            var document = await appService.UploadAsync(
+                BuildUpload(Guid.NewGuid(), categoryId, FirstContent, "rapor.pdf"));
+            var picture = await appService.UploadAsync(
+                BuildUpload(Guid.NewGuid(), categoryId, SecondContent, "fotograf.jpg"));
+
+            (await appService.DownloadAsync(document.Id)).ContentType.ShouldBe("application/pdf");
+            (await appService.DownloadAsync(picture.Id)).ContentType.ShouldBe("image/jpeg");
+        });
+    }
+
     // Yuklenen kaydin okuma yollarinda gorundugunu dogrular; onay adimi calismis demektir.
     [Fact]
     public async Task Should_expose_uploaded_file_on_read_paths()

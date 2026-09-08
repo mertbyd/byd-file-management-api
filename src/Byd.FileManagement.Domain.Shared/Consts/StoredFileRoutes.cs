@@ -15,4 +15,5 @@ public static class StoredFileRoutes
     public const string FilteredCount = "filtered-count";
     public const string Upload = "upload";
     public const string Download = "{id:guid}/download";
+    public const string DownloadContent = "{id:guid}/download/content";
 }

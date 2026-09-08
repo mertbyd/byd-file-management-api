@@ -63,6 +63,18 @@ public class StoredFileController : FileManagementController
         return result;
     }
 
+    // Dosyayi tarayicinin dogrudan kaydedebilecegi bicimde dondurur.
+    // Yukaridaki uctan farki cevabin bicimi: orada byte'lar Result zarfinin icinde base64 metin olarak
+    // gider ve cagiran kodun cozmesi gerekir; burada govde dosyanin kendisidir ve Content-Disposition
+    // basligi tarayiciya kaydettirir. Modul ici cagrilar yukaridaki ucu kullanmaya devam eder.
+    [HttpGet(StoredFileRoutes.DownloadContent)]
+    [Authorize(FileManagementPermissions.StoredFiles.View)]
+    public virtual async Task<FileContentResult> DownloadContent(Guid id)
+    {
+        var file = await AppService.DownloadAsync(id);
+        return File(file.Data, file.ContentType, file.OriginalFileName);
+    }
+
     // Kimligi verilen dosyanin kaydini ve byte'larini siler.
     [HttpDelete(StoredFileRoutes.ById)]
     [Authorize(FileManagementPermissions.StoredFiles.Manage)]
