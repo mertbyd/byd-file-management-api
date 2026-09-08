@@ -23,10 +23,8 @@ public static class FileManagementApplicationBuilderExtensions
         // Pipeline kurulumu senkron oldugu icin acilis isi burada beklenir. Istek yolunda degil,
         // process basina bir kez calisan acilis adimi oldugu icin bloklama kabul edilir.
         SeedLookupsAsync(app.ApplicationServices).GetAwaiter().GetResult();
-
         return app;
     }
-
     // Durum lookup'ini tek unit of work icinde yazar; yazim idempotenttir, mevcut satirlara dokunmaz.
     private static async Task SeedLookupsAsync(IServiceProvider serviceProvider)
     {

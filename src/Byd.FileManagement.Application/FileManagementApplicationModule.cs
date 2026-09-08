@@ -1,8 +1,6 @@
-﻿using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Byd.CoreExtensions;
-using Byd.FileManagement.BlobStoring;
 using Byd.FileManagement.Consts;
 using Byd.FileManagement.Options;
 using Volo.Abp.Application;
@@ -27,12 +25,21 @@ namespace Byd.FileManagement;
 // FileManagement:FileStorage bolumunu koyar, kablolama kodu yazmaz.
 public class FileManagementApplicationModule : AbpModule
 {
-    // Modul kendi depolama kablolamasini varsayilan olarak kurar; kendi saglayicisini takan host kapatir.
+    // Modulun varsayilanlarini koyar: kendi kablolamasini kurar ve depolama bilgilerini ayar
+    // bolumunden tipli options'a baglar.
+    //
+    // NEDEN OKUMA BURADA. ABP once bagimli modulun PreConfigureServices'ini, sonra tuketen host'un
+    // kendi PreConfigureServices'ini calistirir. Okuma burada oldugu icin host hicbir sey yazmadan
+    // calisir; degerleri baska bir kaynaktan (kod, vault, ortam degiskeni) vermek isteyen host ise
+    // ayni options'i kendi PreConfigureServices'inde ezer ve sonra calistigi icin kazanir.
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
+        var configuration = context.Services.GetConfiguration();
+
         PreConfigure<FileManagementModuleOptions>(options =>
         {
             options.IsDefaultStorageEnabled = true;
+            configuration.GetSection(FileStorageConsts.SectionName).Bind(options.FileStorage);
         });
     }
 
@@ -45,34 +52,12 @@ public class FileManagementApplicationModule : AbpModule
         Configure<FileManagementModuleOptions>(options =>
         {
             options.IsDefaultStorageEnabled = moduleOptions.IsDefaultStorageEnabled;
+            options.FileStorage = moduleOptions.FileStorage;
         });
 
         if (moduleOptions.IsDefaultStorageEnabled)
         {
-            ConfigureBlobStoring(context);
+            context.Services.AddFileManagementFileStorage(moduleOptions.FileStorage);
         }
-    }
-
-    // Modul yalniz kendi tipli container'ini yapilandirir; host'un varsayilan container'ina dokunmaz.
-    private void ConfigureBlobStoring(ServiceConfigurationContext context)
-    {
-        var configuration = context.Services.GetConfiguration();
-
-        Configure<AbpBlobStoringOptions>(options =>
-        {
-            options.Containers.Configure<StoredFileBlobContainer>(container =>
-            {
-                container.UseMinio(minio =>
-                {
-                    minio.EndPoint = configuration[FileStorageConsts.EndPointKey]!;
-                    minio.AccessKey = configuration[FileStorageConsts.AccessKeyKey]!;
-                    minio.SecretKey = configuration[FileStorageConsts.SecretKeyKey]!;
-                    minio.BucketName = configuration[FileStorageConsts.BucketNameKey]!;
-                    minio.WithSSL = Convert.ToBoolean(configuration[FileStorageConsts.WithSslKey]);
-                    minio.CreateBucketIfNotExists =
-                        Convert.ToBoolean(configuration[FileStorageConsts.CreateBucketIfNotExistsKey]);
-                });
-            });
-        });
     }
 }
