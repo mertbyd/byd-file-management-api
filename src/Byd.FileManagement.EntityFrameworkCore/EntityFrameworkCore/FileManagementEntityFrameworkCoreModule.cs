@@ -5,7 +5,6 @@ using Byd.CoreExtensions.Interfaces;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.Modularity;
-using Volo.Abp.SettingManagement.EntityFrameworkCore;
 
 namespace Byd.FileManagement.EntityFrameworkCore;
 
@@ -22,16 +21,6 @@ public class FileManagementEntityFrameworkCoreModule : AbpModule
     // PostgreSQL saglayicisi yalniz File DbContext'ine baglanir; core kendi context'ini yonetir.
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        // ABP'nin ayar context'i Core DbContext'inden ayridir; ortak veritabanindaki snake_case modelini burada kurar.
-        Configure<AbpDbContextOptions>(options =>
-        {
-            options.Configure<SettingManagementDbContext>(configurationContext =>
-            {
-                configurationContext.UseNpgsql();
-                configurationContext.DbContextOptions.UseSnakeCaseNamingConvention();
-            });
-        });
-
         Configure<AbpDbContextOptions>(options =>
         {
             options.Configure<FileManagementDbContext>(configurationContext =>
@@ -39,7 +28,6 @@ public class FileManagementEntityFrameworkCoreModule : AbpModule
                 configurationContext.UseNpgsql();
             });
         });
-
         context.Services.AddAbpDbContext<FileManagementDbContext>(options =>
         {
             options.AddDefaultRepositories(includeAllEntities: true);

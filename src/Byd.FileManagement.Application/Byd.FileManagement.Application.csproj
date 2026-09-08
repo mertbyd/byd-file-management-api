@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="..\..\common.props" />
 
@@ -19,6 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Byd.CoreExtensions.Application" Version="0.2.1" />
+    <PackageReference Include="Byd.CoreExtensions.Application" Version="0.2.3" />
   </ItemGroup>
 </Project>
