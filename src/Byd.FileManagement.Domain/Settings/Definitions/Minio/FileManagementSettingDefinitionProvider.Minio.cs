@@ -43,6 +43,14 @@ public partial class FileManagementSettingDefinitionProvider
             new SettingDefinition(
                 FileManagementSettings.Minio.CreateBucketIfNotExists,
                 defaultValue: "true",
+                isVisibleToClients: false),
+            new SettingDefinition(
+                FileManagementSettings.Minio.PresignedGetExpiry,
+                defaultValue: "01:00:00",
+                isVisibleToClients: false),
+            new SettingDefinition(
+                FileManagementSettings.Minio.PresignedPutExpiry,
+                defaultValue: "01:00:00",
                 isVisibleToClients: false));
     }
 }

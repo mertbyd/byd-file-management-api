@@ -16,4 +16,6 @@ public static class FileStorageConsts
     public const string BucketNameField = nameof(FileStorageOptions.BucketName);
     public const string WithSslField = nameof(FileStorageOptions.WithSsl);
     public const string CreateBucketIfNotExistsField = nameof(FileStorageOptions.CreateBucketIfNotExists);
+    public const string PresignedGetExpiryField = nameof(FileStorageOptions.PresignedGetExpiry);
+    public const string PresignedPutExpiryField = nameof(FileStorageOptions.PresignedPutExpiry);
 }

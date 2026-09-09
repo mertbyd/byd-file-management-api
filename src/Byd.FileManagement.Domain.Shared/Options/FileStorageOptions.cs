@@ -1,3 +1,5 @@
+using System;
+
 namespace Byd.FileManagement.Options;
 
 /// <summary>
@@ -27,4 +29,10 @@ public class FileStorageOptions
     // Bucket yoksa modulun onu kendisi olusturup olusturmayacagi.
     // Varsayilan burada degil, ayar tanimindadir; iki yerde durursa ayrisir.
     public bool CreateBucketIfNotExists { get; set; }
+
+    // Presigned indirme baglantisinin gecerlilik suresi.
+    public TimeSpan PresignedGetExpiry { get; set; }
+
+    // Presigned yukleme baglantisinin gecerlilik suresi.
+    public TimeSpan PresignedPutExpiry { get; set; }
 }
