@@ -18,4 +18,6 @@ public static class StoredFileRoutes
     public const string Upload = "upload";
     public const string Download = "{id:guid}/download";
     public const string DownloadContent = "{id:guid}/download/content";
+    public const string PresignedUrl = "{id:guid}/presigned-url";
+    public const string PresignedUpload = "presigned-upload";
 }

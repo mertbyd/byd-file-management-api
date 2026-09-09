@@ -1,17 +1,23 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using NSubstitute;
 using Byd.CoreExtensions.EntityFrameworkCore;
 using Byd.FileManagement.BlobStoring;
+using Byd.FileManagement.Settings;
 using Volo.Abp;
 using Volo.Abp.BlobStoring;
 using Volo.Abp.BlobStoring.FileSystem;
 using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.Modularity;
+using Volo.Abp.Settings;
 using Volo.Abp.Threading;
 using Volo.Abp.Uow;
 
@@ -42,6 +48,7 @@ public class FileManagementEntityFrameworkCoreTestModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddAlwaysDisableUnitOfWorkTransaction();
+        ReplaceSettingProvider(context.Services);
 
         _connectionString = CreateDatabaseAndGetConnectionString();
 
@@ -51,6 +58,25 @@ public class FileManagementEntityFrameworkCoreTestModule : AbpModule
         });
 
         ConfigureBlobStorage();
+    }
+
+    // Presigned testlerini AbpSettings tablosuna baglamadan kararli ayarlarla calistirir.
+    private static void ReplaceSettingProvider(IServiceCollection services)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            [FileManagementSettings.Minio.EndPoint] = "localhost:9000",
+            [FileManagementSettings.Minio.AccessKey] = "test-access-key",
+            [FileManagementSettings.Minio.SecretKey] = "test-secret-key",
+            [FileManagementSettings.Minio.BucketName] = "presigned-tests",
+            [FileManagementSettings.Minio.PresignedGetExpiry] = "01:00:00",
+            [FileManagementSettings.Minio.PresignedPutExpiry] = "02:00:00"
+        };
+        var settingProvider = Substitute.For<ISettingProvider>();
+        settingProvider.GetOrNullAsync(Arg.Any<string>())
+            .Returns(call => Task.FromResult(values.GetValueOrDefault(call.Arg<string>())));
+
+        services.Replace(ServiceDescriptor.Singleton(settingProvider));
     }
 
     // Saglayici secimi host beyanidir; test host'u byte'lari gecici bir klasore yazar.

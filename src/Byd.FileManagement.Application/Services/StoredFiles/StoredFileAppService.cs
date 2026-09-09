@@ -33,11 +33,17 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
     private IBlobContainer<StoredFileBlobContainer> BlobContainer =>
         LazyGetRequiredService<IBlobContainer<StoredFileBlobContainer>>();
 
+    private StoredFilePresignedUrlProvider PresignedUrlProvider =>
+        LazyGetRequiredService<StoredFilePresignedUrlProvider>();
+
     private IValidator<StoredFileListInput> ListValidator =>
         LazyGetRequiredService<IValidator<StoredFileListInput>>();
 
     private IValidator<UploadStoredFileDto> UploadValidator =>
         LazyGetRequiredService<IValidator<UploadStoredFileDto>>();
+
+    private IValidator<PresignedUploadStoredFileDto> PresignedUploadValidator =>
+        LazyGetRequiredService<IValidator<PresignedUploadStoredFileDto>>();
 
     // Kimligi verilen kaydi Manager guard'i uzerinden getirir.
     public virtual async Task<StoredFileDto> GetAsync(Guid id)
@@ -118,6 +124,28 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
         var data = await BlobContainer.GetAllBytesAsync(entity.BlobName, cancellationToken);
 
         return Mapper.Map(entity, data);
+    }
+
+    // Kaydi guard'dan gecirip byte tasimayan sureli GET baglantisini dondurur.
+    public virtual async Task<PresignedUrlDto> GetPresignedUrlAsync(Guid id)
+    {
+        var entity = await Manager.EnsureExistsAsync(id, CancellationTokenProvider.Token);
+        var (url, expiresAt) = await PresignedUrlProvider.CreateGetAsync(entity.BlobName);
+
+        return Mapper.MapToPresignedUrl(entity, url, expiresAt);
+    }
+
+    // Girdiyi dogrular, metadata kaydini acar ve byte'i istemcinin PUT baglantisina birakir.
+    // Istemci yuklemeyi tamamlamazsa iceriksiz metadata kalabilir; temizligi F6b oksuz taramasina aittir.
+    public virtual async Task<PresignedUrlDto> CreatePresignedUploadAsync(PresignedUploadStoredFileDto input)
+    {
+        var cancellationToken = CancellationTokenProvider.Token;
+        await PresignedUploadValidator.ValidateAndThrowAsync(input, cancellationToken);
+        var entity = await Manager.CreateAsync(Mapper.Map(input), cancellationToken);
+        await Repository.InsertAsync(entity, autoSave: true, cancellationToken: cancellationToken);
+        var (url, expiresAt) = await PresignedUrlProvider.CreatePutAsync(entity.BlobName);
+
+        return Mapper.MapToPresignedUrl(entity, url, expiresAt);
     }
 
     // Kimligi verilen kaydi ve byte'larini siler.
