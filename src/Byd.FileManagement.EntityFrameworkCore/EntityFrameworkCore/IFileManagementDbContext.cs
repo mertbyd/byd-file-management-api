@@ -14,7 +14,4 @@ public interface IFileManagementDbContext : IEfCoreDbContext
 
     // Saklanan dosya metadata aggregate setini repository uygulamasina acar.
     DbSet<StoredFile> StoredFiles { get; }
-
-    // Dosya durumu lookup setini repository uygulamasina acar.
-    DbSet<StoredFileStatus> StoredFileStatuses { get; }
 }

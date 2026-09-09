@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Byd.FileManagement.Consts;
 using Byd.FileManagement.Entities.FileCategories;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.EntityFrameworkCore.FileCategories;
@@ -75,6 +76,29 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
         });
     }
 
+    // Kategori kimligi sorgusunun farkli is kayitlarindaki dosyalari getirip diger kategoriyi elemesini dogrular.
+    [Fact]
+    public async Task Should_return_only_files_of_requested_category()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var repository = GetRequiredService<IStoredFileRepository>();
+            var manager = GetRequiredService<StoredFileManager>();
+            var category = await CreateCategoryAsync();
+            var otherCategory = await CreateCategoryAsync();
+            var first = await InsertFileAsync(Guid.NewGuid(), category.Id);
+            var second = await InsertFileAsync(Guid.NewGuid(), category.Id);
+            var other = await InsertFileAsync(Guid.NewGuid(), otherCategory.Id);
+
+            var files = await repository.GetListByCategoryIdAsync(category.Id, CancellationToken.None);
+
+            files.Count.ShouldBe(2);
+            files.ShouldContain(item => item.Id == first.Id);
+            files.ShouldContain(item => item.Id == second.Id);
+            files.ShouldNotContain(item => item.Id == other.Id);
+        });
+    }
+
     // Dosyasi olmayan kategori adresinin bos liste dondurdugunu dogrular.
     [Fact]
     public async Task Should_return_empty_list_for_category_without_files()
@@ -119,8 +143,12 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
                     externalId,
                     category.Id,
                     CancellationToken.None);
+                var categoryFiles = await repository.GetListByCategoryIdAsync(
+                    category.Id,
+                    CancellationToken.None);
 
                 files.ShouldBeEmpty();
+                categoryFiles.ShouldBeEmpty();
             }
 
             using (currentTenant.Change(owner))
@@ -129,38 +157,16 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
                     externalId,
                     category.Id,
                     CancellationToken.None);
+                var categoryFiles = await repository.GetListByCategoryIdAsync(
+                    category.Id,
+                    CancellationToken.None);
 
                 files.Count.ShouldBe(1);
+                categoryFiles.Count.ShouldBe(1);
             }
         });
     }
 
-    // Yarim kalmis bir yuklemenin okuma yollarinda gorunmedigini dogrular.
-    [Fact]
-    public async Task Should_hide_pending_file_from_reads()
-    {
-        await WithUnitOfWorkAsync(async () =>
-        {
-            var repository = GetRequiredService<IStoredFileRepository>();
-            var manager = GetRequiredService<StoredFileManager>();
-            var category = await CreateCategoryAsync();
-            var externalId = Guid.NewGuid();
-            // Onaylanmadan birakilan kayit, byte'lari yazilamamis bir yuklemeyi temsil eder.
-            var pending = await manager.CreateAsync(
-                StoredFileTestDataBuilder.Build(externalId, category.Id),
-                CancellationToken.None);
-            await repository.InsertAsync(pending, autoSave: true, cancellationToken: CancellationToken.None);
-
-            var readCategory = await repository.GetListByCategoryAsync(
-                externalId,
-                category.Id,
-                CancellationToken.None);
-            var readList = await repository.GetListByExternalIdsAsync([externalId], CancellationToken.None);
-
-            readCategory.ShouldBeEmpty();
-            readList.ShouldBeEmpty();
-        });
-    }
 
     // Verilen adrese kalici bir dosya kaydi yazar.
     private async Task<StoredFile> InsertFileAsync(Guid externalId, Guid categoryId)
@@ -170,8 +176,6 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
         var file = await manager.CreateAsync(
             StoredFileTestDataBuilder.Build(externalId, categoryId),
             CancellationToken.None);
-        // Okuma yollari yalniz onaylanmis kayitlari dondurur; test verisi de yukleme akisi gibi onaylanir.
-        manager.MarkAsApproved(file);
         await repository.InsertAsync(file, autoSave: true, cancellationToken: CancellationToken.None);
 
         return file;

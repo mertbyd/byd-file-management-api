@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,23 +14,21 @@ namespace Byd.FileManagement.Interfaces.StoredFiles;
 // kirilimindeki okuma sorgularini ekler.
 // sistemdeki gorevi: Dosya metadata kullanim senaryolari ile EF Core uygulamasi arasindaki veri erisim siniridir.
 // Tabanda is kaydi kimligine gore toplu okuma yok; N+1 uretmemek icin buraya eklenir.
-// Okuma yollari yalniz onaylanmis kayitlari dondurur; byte'lari yazilamamis bir yukleme
-// var olmayan bir blob'a isaret eder ve disariya gosterilmez.
 public interface IStoredFileRepository : IExtendedRepository<StoredFile>
 {
-    // Verilen is kayitlarinin onaylanmis dosyalarini tek sorguda getirir.
+    // Verilen is kayitlarinin dosyalarini tek sorguda getirir.
     Task<List<StoredFile>> GetListByExternalIdsAsync(
         IEnumerable<Guid> externalIds,
         CancellationToken cancellationToken = default);
 
-    // Bir is kaydinin verilen kategorideki onaylanmis dosyalarini getirir. Kategori bir belge
+    // Bir is kaydinin verilen kategorideki dosyalarini getirir. Kategori bir belge
     // turudur, tek dosyalik bir yuva degil; bu yuzden sonuc listedir.
     Task<List<StoredFile>> GetListByCategoryAsync(
         Guid externalId,
         Guid categoryId,
         CancellationToken cancellationToken = default);
 
-    // Verilen kategorideki tum onaylanmis dosyalari getirir.
+    // Verilen kategorideki tum dosyalari getirir.
     Task<List<StoredFile>> GetListByCategoryIdAsync(
         Guid categoryId,
         CancellationToken cancellationToken = default);

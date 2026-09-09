@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Byd.CoreExtensions.Repositories;
-using Byd.FileManagement.Consts;
 using Byd.CoreExtensions.Querying;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.Interfaces.StoredFiles;
@@ -17,11 +16,10 @@ namespace Byd.FileManagement.EntityFrameworkCore.Repositories.StoredFiles;
 /// <summary>
 /// IStoredFileRepository sozlesmesini EF Core DbContext'e baglar.
 /// </summary>
-// islevi: StoredFile icin generic, bulk, DataTable ve kategori kirilimli okuma sorgularini
-// saglar; okuma yollarini onaylanmis kayitlarla sinirlar.
+// islevi: StoredFile icin generic, bulk, DataTable ve kategori kirilimli okuma sorgularini saglar.
 // sistemdeki gorevi: IStoredFileRepository sozlesmesinin EfExtendedRepository tabanli provider uygulamasidir.
 // mirastan gelen: CRUD, filtreli liste, sayim, kullanim kontrolu ve bulk yazma yuzeyleri.
-// burada yazilan: is kaydi kimlikleriyle toplu okuma, kategori kirilimli okuma ve onay kisiti.
+// burada yazilan: is kaydi kimlikleriyle toplu okuma ve kategori kirilimli okuma.
 [ExposeServices(typeof(IStoredFileRepository))]
 public class EfCoreStoredFileRepository
     : EfExtendedRepository<FileManagementDbContext, StoredFile, Guid>,
@@ -34,57 +32,49 @@ public class EfCoreStoredFileRepository
     {
     }
 
-    // StoredFile okuma sorgularina DTO'nun CategoryName ve StatusName kaynaklarini ekler.
+    // StoredFile okuma sorgularina DTO'nun CategoryName kaynagini ekler.
     public override async Task<IQueryable<StoredFile>> WithDetailsAsync()
     {
         return (await GetQueryableAsync())
-            .Include(entity => entity.Category)
-            .Include(entity => entity.Status);
+            .Include(entity => entity.Category);
     }
 
-    // Is kaydi kimliklerinin onaylanmis dosyalarini veritabaninda tek sorguyla getirir.
+    // Is kaydi kimliklerinin dosyalarini veritabaninda tek sorguyla getirir.
     public virtual async Task<List<StoredFile>> GetListByExternalIdsAsync(
         IEnumerable<Guid> externalIds,
         CancellationToken cancellationToken = default)
     {
-        return await ByExternalIds(OnlyApproved(await WithDetailsAsync()), externalIds)
+        return await ByExternalIds(await WithDetailsAsync(), externalIds)
             .ToListAsync(cancellationToken);
     }
 
-    // Is kaydinin verilen kategorideki onaylanmis dosyalarini getirir.
+    // Is kaydinin verilen kategorideki dosyalarini getirir.
     public virtual async Task<List<StoredFile>> GetListByCategoryAsync(
         Guid externalId,
         Guid categoryId,
         CancellationToken cancellationToken = default)
     {
-        return await InCategory(OnlyApproved(await WithDetailsAsync()), externalId, categoryId)
+        return await InCategory(await WithDetailsAsync(), externalId, categoryId)
             .ToListAsync(cancellationToken);
     }
 
-    // Verilen kategorideki onaylanmis dosyalari veritabaninda filtreleyerek getirir.
+    // Verilen kategorideki dosyalari veritabaninda filtreleyerek getirir.
     public virtual async Task<List<StoredFile>> GetListByCategoryIdAsync(
         Guid categoryId,
         CancellationToken cancellationToken = default)
     {
-        return await OnlyApproved(await WithDetailsAsync())
+        return await (await WithDetailsAsync())
             .Where(entity => entity.CategoryId == categoryId)
             .ToListAsync(cancellationToken);
     }
 
-    // Filtreli listede kategori adini ayni sorguda getirir ve onaysiz kayitlari disarida
-    // birakir. Taban kancasi hem listeyi hem sayimi besledigi icin kural tek yerde durur.
+    // Filtreli listede kategori adini ayni sorguda getirir. Taban kancasi hem listeyi hem
+    // sayimi besledigi icin kural tek yerde durur.
     protected override async Task<IQueryable<StoredFile>> CreateFilteredQueryAsync<TFiltering>(
         IDataTablePagingProperty<TFiltering> pagingProperty)
     {
-        return OnlyApproved(await base.CreateFilteredQueryAsync(pagingProperty))
+        return (await base.CreateFilteredQueryAsync(pagingProperty))
             .Include(entity => entity.Category);
-    }
-
-    // Byte'lari henuz yazilmamis kayitlar okuma yollarinda gorunmez; yarim kalan yukleme
-    // var olmayan bir blob'a isaret eder.
-    private static IQueryable<StoredFile> OnlyApproved(IQueryable<StoredFile> query)
-    {
-        return query.Where(entity => entity.StatusId == StoredFileStatusConsts.ApprovedId);
     }
 
     private static IQueryable<StoredFile> ByExternalIds(

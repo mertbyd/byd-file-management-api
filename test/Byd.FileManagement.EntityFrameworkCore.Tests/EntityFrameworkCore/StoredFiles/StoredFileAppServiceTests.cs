@@ -1,8 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Byd.FileManagement.Consts;
 using Byd.FileManagement.Dtos.StoredFiles;
+using Byd.FileManagement.Entities.FileCategories;
 using Byd.FileManagement.EntityFrameworkCore.FileCategories;
 using Byd.FileManagement.Interfaces.FileCategories;
 using Byd.FileManagement.Managers.FileCategories;
@@ -108,6 +110,63 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
         });
     }
 
+    // Kategori okumasinin farkli is kayitlarindaki dosyalari dogru byte'larla birlestirdigini dogrular.
+    [Fact]
+    public async Task Should_return_every_file_with_content_by_category()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var appService = GetRequiredService<IStoredFileAppService>();
+            var category = await CreateCategoryAsync();
+            var otherCategory = await CreateCategoryAsync();
+            var first = await appService.UploadAsync(
+                BuildUpload(Guid.NewGuid(), category.Id, FirstContent, "ilk.pdf"));
+            var second = await appService.UploadAsync(
+                BuildUpload(Guid.NewGuid(), category.Id, SecondContent, "ikinci.pdf"));
+            await appService.UploadAsync(
+                BuildUpload(Guid.NewGuid(), otherCategory.Id, FirstContent, "diger.pdf"));
+
+            var files = await appService.GetListWithContentByCategoryAsync(category.Id);
+
+            files.Count.ShouldBe(2);
+            var filesById = files.ToDictionary(item => item.Id);
+            filesById[first.Id].Data.ShouldBe(FirstContent);
+            filesById[second.Id].Data.ShouldBe(SecondContent);
+            filesById[first.Id].CategoryName.ShouldBe(category.Name);
+        });
+    }
+
+    // Is kaydi ve kategori okumasinin yalniz iki adresle de eslesen dosya byte'larini dondurdugunu dogrular.
+    [Fact]
+    public async Task Should_return_matching_files_with_content_by_external_id_and_category()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var appService = GetRequiredService<IStoredFileAppService>();
+            var category = await CreateCategoryAsync();
+            var otherCategory = await CreateCategoryAsync();
+            var externalId = Guid.NewGuid();
+            var first = await appService.UploadAsync(
+                BuildUpload(externalId, category.Id, FirstContent, "ilk.pdf"));
+            var second = await appService.UploadAsync(
+                BuildUpload(externalId, category.Id, SecondContent, "ikinci.pdf"));
+            await appService.UploadAsync(
+                BuildUpload(Guid.NewGuid(), category.Id, FirstContent, "diger-is.pdf"));
+            await appService.UploadAsync(
+                BuildUpload(externalId, otherCategory.Id, FirstContent, "diger-kategori.pdf"));
+
+            var files = await appService.GetListWithContentByExternalIdAndCategoryAsync(
+                externalId,
+                category.Id);
+
+            files.Count.ShouldBe(2);
+            files.All(item => item.ExternalId == externalId && item.CategoryId == category.Id).ShouldBeTrue();
+            var filesById = files.ToDictionary(item => item.Id);
+            filesById[first.Id].Data.ShouldBe(FirstContent);
+            filesById[second.Id].Data.ShouldBe(SecondContent);
+        });
+    }
+
     // Silmenin kaydi kaldirdigini ve byte'larin da gittigini dogrular.
     [Fact]
     public async Task Should_delete_record_and_content()
@@ -161,10 +220,14 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
     // Testin dosya baglayacagi kategoriyi acar; modul kategori seed etmez.
     private async Task<Guid> CreateCategoryIdAsync()
     {
-        var category = await FileCategoryTestDataBuilder.InsertAsync(
+        return (await CreateCategoryAsync()).Id;
+    }
+
+    // Testin kullanacagi kategori kaydini adiyla birlikte acar.
+    private Task<FileCategory> CreateCategoryAsync()
+    {
+        return FileCategoryTestDataBuilder.InsertAsync(
             GetRequiredService<FileCategoryManager>(),
             GetRequiredService<IFileCategoryRepository>());
-
-        return category.Id;
     }
 }

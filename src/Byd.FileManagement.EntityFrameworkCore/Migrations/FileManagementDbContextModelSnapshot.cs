@@ -124,10 +124,6 @@ namespace Byd.FileManagement.Migrations
                         .HasColumnType("character varying(260)")
                         .HasColumnName("original_file_name");
 
-                    b.Property<Guid>("StatusId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("status_id");
-
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("TenantId");
@@ -137,9 +133,6 @@ namespace Byd.FileManagement.Migrations
 
                     b.HasIndex("CategoryId")
                         .HasDatabaseName("ix_stored_files_category_id");
-
-                    b.HasIndex("StatusId")
-                        .HasDatabaseName("ix_stored_files_status_id");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("IX_StoredFiles_TenantId");
@@ -152,38 +145,6 @@ namespace Byd.FileManagement.Migrations
                     b.ToView(null, (string)null);
                 });
 
-            modelBuilder.Entity("Byd.FileManagement.Entities.StoredFiles.StoredFileStatus", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<int?>("Code")
-                        .HasColumnType("integer")
-                        .HasColumnName("code");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_stored_file_statuses");
-
-                    b.ToTable("StoredFileStatuses", "file_management");
-
-                    b.ToView(null, (string)null);
-                });
-
             modelBuilder.Entity("Byd.FileManagement.Entities.StoredFiles.StoredFile", b =>
                 {
                     b.HasOne("Byd.FileManagement.Entities.FileCategories.FileCategory", "Category")
@@ -192,13 +153,6 @@ namespace Byd.FileManagement.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_stored_files_file_categories_category_id");
-
-                    b.HasOne("Byd.FileManagement.Entities.StoredFiles.StoredFileStatus", null)
-                        .WithMany()
-                        .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_stored_files_stored_file_statuses_status_id");
 
                     b.Navigation("Category");
                 });

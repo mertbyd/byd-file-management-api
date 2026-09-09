@@ -71,25 +71,6 @@ public class StoredFileManagerTests : FileManagementEntityFrameworkCoreTestBase
         });
     }
 
-    // Yeni kaydin Beklemede acildigini ve onay gecisinin durumu degistirdigini dogrular.
-    // Iki fazli yazmanin tamami buna dayanir: byte yazilamazsa kayit Beklemede kalir ve okunmaz.
-    [Fact]
-    public async Task Should_open_as_pending_then_move_to_approved()
-    {
-        await WithUnitOfWorkAsync(async () =>
-        {
-            var manager = GetRequiredService<StoredFileManager>();
-
-            var entity = await manager.CreateAsync(
-                await BuildModelAsync(),
-                CancellationToken.None);
-
-            entity.StatusId.ShouldBe(StoredFileStatusConsts.PendingId);
-            manager.MarkAsApproved(entity);
-            entity.StatusId.ShouldBe(StoredFileStatusConsts.ApprovedId);
-        });
-    }
-
     // Var olmayan kategoriye yazmanin reddedildigini dogrular.
     [Fact]
     public async Task Should_reject_unknown_category()

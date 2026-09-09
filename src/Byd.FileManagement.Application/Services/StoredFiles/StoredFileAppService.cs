@@ -129,15 +129,13 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
         await RemoveAsync(entity, cancellationToken);
     }
 
-    // Satir once yazilir: byte yazimi olurse geride yalniz okunmayan bir Beklemede kayit kalir.
+    // Satir once yazilir: byte yazimi olurse geride yalniz iceriksiz bir kayit kalir.
     // Ters sirada sahipsiz bir blob kalir ve kimse onu bulamaz.
     private async Task<StoredFileDto> WriteAsync(UploadStoredFileDto input, CancellationToken cancellationToken)
     {
         var entity = await Manager.CreateAsync(Mapper.Map(input), cancellationToken);
         await Repository.InsertAsync(entity, autoSave: true, cancellationToken: cancellationToken);
         await BlobContainer.SaveAsync(entity.BlobName, input.Data, overrideExisting: false, cancellationToken);
-        Manager.MarkAsApproved(entity);
-        await Repository.UpdateAsync(entity, autoSave: true, cancellationToken: cancellationToken);
 
         return Mapper.Map(entity);
     }

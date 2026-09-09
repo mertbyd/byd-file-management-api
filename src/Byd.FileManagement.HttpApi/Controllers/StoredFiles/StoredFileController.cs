@@ -25,7 +25,7 @@ public class StoredFileController : FileManagementController
         LazyGetRequiredService<IStoredFileAppService>();
 
     /// <summary>
-    /// Verilen is kayitlarina bagli onayli dosyalarin metadata bilgilerini toplu getirir.
+    /// Verilen is kayitlarina bagli dosyalarin metadata bilgilerini toplu getirir.
     /// </summary>
     /// <param name="externalIds">Dosyalari aranacak is kaydi kimlikleri.</param>
     /// <remarks>
@@ -43,7 +43,7 @@ public class StoredFileController : FileManagementController
     }
 
     /// <summary>
-    /// Bir is kaydinin verilen kategorideki onayli dosya metadata kayitlarini getirir.
+    /// Bir is kaydinin verilen kategorideki dosya metadata kayitlarini getirir.
     /// </summary>
     /// <param name="externalId">Dosyalarin bagli oldugu is kaydi kimligi.</param>
     /// <param name="categoryId">Dosyalarin ait oldugu kategori kimligi.</param>
@@ -62,12 +62,11 @@ public class StoredFileController : FileManagementController
     }
 
     /// <summary>
-    /// Verilen kategorideki tum onayli dosyalari metadata ve byte icerikleriyle getirir.
+    /// Verilen kategorideki tum dosyalari metadata ve byte icerikleriyle getirir.
     /// </summary>
     /// <param name="categoryId">Dosyalari aranacak kategori kimligi.</param>
     /// <remarks>
-    /// Response value elemanlari Id, TenantId, OrganizationId, StatusId, StatusName, CategoryId,
-    /// CategoryName, ExternalId, ModuleName, BlobName, OriginalFileName, audit alanlari ve Data degerini tasir.
+    /// Response value elemanlari StoredFile metadata alanlarini ve Data degerini tasir.
     /// Data, MinIO/blob depodan okunan byte[] icerigidir ve JSON icinde Base64 olarak gorunur.
     /// </remarks>
     [HttpGet(StoredFileRoutes.ByCategoryWithContent)]
@@ -80,7 +79,7 @@ public class StoredFileController : FileManagementController
     }
 
     /// <summary>
-    /// Bir is kaydinin verilen kategorideki tum onayli dosyalarini metadata ve byte icerikleriyle getirir.
+    /// Bir is kaydinin verilen kategorideki tum dosyalarini metadata ve byte icerikleriyle getirir.
     /// </summary>
     /// <param name="externalId">Dosyalarin bagli oldugu is kaydi kimligi.</param>
     /// <param name="categoryId">Dosyalarin ait oldugu kategori kimligi.</param>
@@ -105,7 +104,7 @@ public class StoredFileController : FileManagementController
     /// <remarks>
     /// Request { ExternalId, CategoryId, Data, FileName }. Data byte[] oldugu icin JSON isteginde
     /// Base64 gonderilir. File modulu metadata kaydini acar, icerigi ayarli blob saglayicisina yazar
-    /// ve kaydi onayli duruma gecirir. Response value StoredFile metadata bilgisidir.
+    /// Response value StoredFile metadata bilgisidir.
     /// </remarks>
     [HttpPost(StoredFileRoutes.Upload)]
     [Authorize(FileManagementPermissions.StoredFiles.Manage)]
@@ -180,7 +179,7 @@ public class StoredFileController : FileManagementController
     }
 
     /// <summary>
-    /// Onayli dosya metadata kayitlarini filtre, siralama ve sayfalama uygulayarak getirir.
+    /// Dosya metadata kayitlarini filtre, siralama ve sayfalama uygulayarak getirir.
     /// </summary>
     /// <param name="input">StoredFile filtre, siralama ve sayfalama bilgileri.</param>
     /// <remarks>
@@ -197,7 +196,7 @@ public class StoredFileController : FileManagementController
     }
 
     /// <summary>
-    /// Verilen filtrelere uyan onayli dosya metadata kayitlarinin toplam sayisini getirir.
+    /// Verilen filtrelere uyan dosya metadata kayitlarinin toplam sayisini getirir.
     /// </summary>
     /// <param name="input">Sayimda kullanilacak StoredFile filtre bilgileri.</param>
     /// <remarks>
