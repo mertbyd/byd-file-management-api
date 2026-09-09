@@ -13,5 +13,8 @@ public partial class FileManagementPermissions
 
         // Dosya metadata detayi, filtreli listesi ve sayimini okuma yetkisi.
         public const string View = Default + ".View";
+
+        // Dosya yukleme, indirme ve silme yetkisi.
+        public const string Manage = Default + ".Manage";
     }
 }

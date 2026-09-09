@@ -16,5 +16,9 @@ public partial class FileManagementPermissionDefinitionProvider
         storedFiles.AddChild(
             FileManagementPermissions.StoredFiles.View,
             L(FileManagementLocalizationKeys.Permissions.StoredFilesView));
+
+        storedFiles.AddChild(
+            FileManagementPermissions.StoredFiles.Manage,
+            L(FileManagementLocalizationKeys.Permissions.StoredFilesManage));
     }
 }

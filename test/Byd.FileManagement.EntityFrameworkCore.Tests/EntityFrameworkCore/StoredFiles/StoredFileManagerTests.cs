@@ -18,7 +18,7 @@ namespace Byd.FileManagement.EntityFrameworkCore.StoredFiles;
 /// StoredFileManager is kurallarini dogrular.
 /// </summary>
 // islevi: Yazma on kosulunu, dosya adi normalizasyonunu, modul adinin host beyanindan
-// gelmesini, content type cozumlemesini ve blob adi uretimini kanitlar.
+// gelmesini, content type cozumlemesini, blob adi uretimini ve durum gecisini kanitlar.
 // sistemdeki gorevi: StoredFile kararlarinin domain sahibinde kaldigini koruyan testtir.
 public class StoredFileManagerTests : FileManagementEntityFrameworkCoreTestBase
 {
@@ -71,7 +71,7 @@ public class StoredFileManagerTests : FileManagementEntityFrameworkCoreTestBase
         });
     }
 
-    // Var olmayan kategori slotuna yazmanin reddedildigini dogrular.
+    // Var olmayan kategoriye yazmanin reddedildigini dogrular.
     [Fact]
     public async Task Should_reject_unknown_category()
     {

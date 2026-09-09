@@ -35,7 +35,8 @@ public class EfCoreStoredFileRepository
     // StoredFile okuma sorgularina DTO'nun CategoryName kaynagini ekler.
     public override async Task<IQueryable<StoredFile>> WithDetailsAsync()
     {
-        return (await GetQueryableAsync()).Include(entity => entity.Category);
+        return (await GetQueryableAsync())
+            .Include(entity => entity.Category);
     }
 
     // Is kaydi kimliklerinin dosyalarini veritabaninda tek sorguyla getirir.
@@ -57,7 +58,18 @@ public class EfCoreStoredFileRepository
             .ToListAsync(cancellationToken);
     }
 
-    // Filtreli listede kategori adini ayni sorguda getirir.
+    // Verilen kategorideki dosyalari veritabaninda filtreleyerek getirir.
+    public virtual async Task<List<StoredFile>> GetListByCategoryIdAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default)
+    {
+        return await (await WithDetailsAsync())
+            .Where(entity => entity.CategoryId == categoryId)
+            .ToListAsync(cancellationToken);
+    }
+
+    // Filtreli listede kategori adini ayni sorguda getirir. Taban kancasi hem listeyi hem
+    // sayimi besledigi icin kural tek yerde durur.
     protected override async Task<IQueryable<StoredFile>> CreateFilteredQueryAsync<TFiltering>(
         IDataTablePagingProperty<TFiltering> pagingProperty)
     {

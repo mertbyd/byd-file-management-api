@@ -1,7 +1,7 @@
 {
   "culture": "tr",
   "texts": {
-    "MyAccount":  "Hesabım",
+    "MyAccount": "Hesabım",
     "SamplePageMessage": "FileManagement modulünden örnek bir sayfa",
     "Permission:FileManagement": "Dosya yönetimi",
     "Permission:FileCategories": "Dosya kategorileri",
@@ -9,8 +9,11 @@
     "Permission:FileCategories.Manage": "Dosya kategorilerini yönetme",
     "Permission:StoredFiles": "Saklanan dosyalar",
     "Permission:StoredFiles.View": "Saklanan dosyaları görüntüleme",
+    "Permission:StoredFiles.Manage": "Saklanan dosyaları yükleme ve silme",
     "FileManagement.StoredFile:00001": "Dosyanın içerik türü adından çözülemedi.",
     "FileManagement.FileCategory:00001": "Dosya kategorisi adı zorunludur.",
-    "FileManagement.FileCategory:00002": "Dosya kategorisi adı 128 karakteri aşamaz."
+    "FileManagement.FileCategory:00002": "Dosya kategorisi adı 128 karakteri aşamaz.",
+    "FileManagement.StoredFile:00002": "Dosya izin verilen azami boyutu asiyor.",
+    "FileManagement.FileStorage:00001": "Zorunlu dosya depolama ayari {SettingKey} tanimlanmamis."
   }
 }

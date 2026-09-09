@@ -257,5 +257,7 @@ paket-files/
 
 # Use abp install-libs to restore.
 **/wwwroot/libs/*
-appsettings*.json
 Jenkinsfile
+
+# Local development configuration; her gelistirici kendi baglanti bilgisini tutar.
+host/**/appsettings.Development.json

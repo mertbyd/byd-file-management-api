@@ -18,7 +18,8 @@ namespace Byd.FileManagement.Managers.StoredFiles;
 // islevi: Yazma on kosullarini dogrular, dosya adini kanoniklestirir, modul adini host
 // beyanindan yazar, blob adini uretir ve content type'in cozulebilirligini dogrular.
 // sistemdeki gorevi: AppService'i is kararindan ve data-shell entity'yi davranistan uzak tutan
-// domain sahibidir.
+// domain sahibidir. Byte yazma/silme burada degildir; o is depolama sinirinin isidir ve Domain
+// hicbir saglayici bagimliligi tasimaz.
 public class StoredFileManager(
     IStoredFileRepository repository,
     FileCategoryManager categoryManager)
@@ -32,7 +33,7 @@ public class StoredFileManager(
         => (await TryGetByIdAsync(id, throwIfNotExists: true, cancellationToken))!;
 
     // Yazma on kosulu: dosyanin baglanacagi kategori gercekten var olmali.
-    // Create modelini normalize edip yeni kaydi kurar.
+    // Create modelini normalize edip byte'lari henuz yazilmamis yeni kaydi kurar.
     public virtual async Task<StoredFile> CreateAsync(
         StoredFileCreateModel model,
         CancellationToken cancellationToken)

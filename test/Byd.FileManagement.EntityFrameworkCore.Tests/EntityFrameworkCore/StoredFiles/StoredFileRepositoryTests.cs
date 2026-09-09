@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Byd.FileManagement.Consts;
 using Byd.FileManagement.Entities.FileCategories;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.EntityFrameworkCore.FileCategories;
@@ -19,7 +20,8 @@ namespace Byd.FileManagement.EntityFrameworkCore.StoredFiles;
 /// StoredFile okuma sorgularini dogrular.
 /// </summary>
 // islevi: Toplu is kaydi okumasinin tek sorguda dogru kumeyi dondurdugunu, bir kategorinin
-// birden fazla dosya tasiyabildigini ve okumalarin tenant sinirini gecmedigini kanitlar.
+// birden fazla dosya tasiyabildigini, onaysiz kaydin okumada gorunmedigini ve okumalarin tenant
+// sinirini gecmedigini kanitlar.
 // sistemdeki gorevi: (ExternalId, CategoryId) adreslemesinin cok dosyali sozlesmesini ve
 // StoredFile'in IMultiTenant kapsamini koruyan testtir.
 public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBase
@@ -74,6 +76,29 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
         });
     }
 
+    // Kategori kimligi sorgusunun farkli is kayitlarindaki dosyalari getirip diger kategoriyi elemesini dogrular.
+    [Fact]
+    public async Task Should_return_only_files_of_requested_category()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var repository = GetRequiredService<IStoredFileRepository>();
+            var manager = GetRequiredService<StoredFileManager>();
+            var category = await CreateCategoryAsync();
+            var otherCategory = await CreateCategoryAsync();
+            var first = await InsertFileAsync(Guid.NewGuid(), category.Id);
+            var second = await InsertFileAsync(Guid.NewGuid(), category.Id);
+            var other = await InsertFileAsync(Guid.NewGuid(), otherCategory.Id);
+
+            var files = await repository.GetListByCategoryIdAsync(category.Id, CancellationToken.None);
+
+            files.Count.ShouldBe(2);
+            files.ShouldContain(item => item.Id == first.Id);
+            files.ShouldContain(item => item.Id == second.Id);
+            files.ShouldNotContain(item => item.Id == other.Id);
+        });
+    }
+
     // Dosyasi olmayan kategori adresinin bos liste dondurdugunu dogrular.
     [Fact]
     public async Task Should_return_empty_list_for_category_without_files()
@@ -118,8 +143,12 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
                     externalId,
                     category.Id,
                     CancellationToken.None);
+                var categoryFiles = await repository.GetListByCategoryIdAsync(
+                    category.Id,
+                    CancellationToken.None);
 
                 files.ShouldBeEmpty();
+                categoryFiles.ShouldBeEmpty();
             }
 
             using (currentTenant.Change(owner))
@@ -128,11 +157,16 @@ public class StoredFileRepositoryTests : FileManagementEntityFrameworkCoreTestBa
                     externalId,
                     category.Id,
                     CancellationToken.None);
+                var categoryFiles = await repository.GetListByCategoryIdAsync(
+                    category.Id,
+                    CancellationToken.None);
 
                 files.Count.ShouldBe(1);
+                categoryFiles.Count.ShouldBe(1);
             }
         });
     }
+
 
     // Verilen adrese kalici bir dosya kaydi yazar.
     private async Task<StoredFile> InsertFileAsync(Guid externalId, Guid categoryId)

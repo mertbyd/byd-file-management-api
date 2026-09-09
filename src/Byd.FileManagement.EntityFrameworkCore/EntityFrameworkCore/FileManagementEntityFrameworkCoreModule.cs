@@ -28,7 +28,6 @@ public class FileManagementEntityFrameworkCoreModule : AbpModule
                 configurationContext.UseNpgsql();
             });
         });
-
         context.Services.AddAbpDbContext<FileManagementDbContext>(options =>
         {
             options.AddDefaultRepositories(includeAllEntities: true);

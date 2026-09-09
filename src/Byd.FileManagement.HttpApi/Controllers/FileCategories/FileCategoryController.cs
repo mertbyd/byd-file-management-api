@@ -24,7 +24,14 @@ public class FileCategoryController : FileManagementController
     private IFileCategoryAppService AppService =>
         LazyGetRequiredService<IFileCategoryAppService>();
 
-    // Kimligi verilen dosya kategorisini getirir.
+    /// <summary>
+    /// Kimligi verilen dosya kategorisini getirir.
+    /// </summary>
+    /// <param name="id">Getirilecek FileCategory kaydinin kimligi.</param>
+    /// <remarks>
+    /// Response value { Id, Name, Code, CreationTime }. Kategori, StoredFile kayitlarinin hangi
+    /// belge turune ait oldugunu belirleyen metadata kaydidir.
+    /// </remarks>
     [HttpGet(FileCategoryRoutes.ById)]
     [Authorize(FileManagementPermissions.FileCategories.View)]
     public virtual async Task<Result<FileCategoryDto>> Get(Guid id)
@@ -33,7 +40,12 @@ public class FileCategoryController : FileManagementController
         return result;
     }
 
-    // Aktiflik filtresine uyan dosya kategorilerini getirir.
+    /// <summary>
+    /// Kullanilabilir dosya kategorilerinin tamamini getirir.
+    /// </summary>
+    /// <remarks>
+    /// Response value elemanlari { Id, Name, Code, CreationTime } alanlarini tasir.
+    /// </remarks>
     [HttpGet]
     [Authorize(FileManagementPermissions.FileCategories.View)]
     public virtual async Task<Result<List<FileCategoryDto>>> GetList()
@@ -42,7 +54,14 @@ public class FileCategoryController : FileManagementController
         return result;
     }
 
-    // Yeni bir dosya kategorisi olusturur.
+    /// <summary>
+    /// Yeni bir dosya kategorisi olusturur.
+    /// </summary>
+    /// <param name="input">Kategori adi ve istege bagli sayisal kodu.</param>
+    /// <remarks>
+    /// Request { Name, Code }. File modulu girdiyi dogrular, kategori adinin tekilligini denetler
+    /// ve kalici kaydi olusturur. Response value { Id, Name, Code, CreationTime } alanlarini tasir.
+    /// </remarks>
     [HttpPost]
     [Authorize(FileManagementPermissions.FileCategories.Manage)]
     public virtual async Task<Result<FileCategoryDto>> Create(
@@ -52,7 +71,15 @@ public class FileCategoryController : FileManagementController
         return result;
     }
 
-    // Kimligi verilen dosya kategorisini gunceller.
+    /// <summary>
+    /// Kimligi verilen dosya kategorisinin adini ve kodunu gunceller.
+    /// </summary>
+    /// <param name="id">Guncellenecek FileCategory kaydinin kimligi.</param>
+    /// <param name="input">Yeni kategori adi ve istege bagli sayisal kodu.</param>
+    /// <remarks>
+    /// Request { Name, Code }. File modulu kaydin varligini ve kategori adinin tekilligini denetler.
+    /// Response value guncel { Id, Name, Code, CreationTime } alanlarini tasir.
+    /// </remarks>
     [HttpPut(FileCategoryRoutes.ById)]
     [Authorize(FileManagementPermissions.FileCategories.Manage)]
     public virtual async Task<Result<FileCategoryDto>> Update(
@@ -63,7 +90,14 @@ public class FileCategoryController : FileManagementController
         return result;
     }
 
-    // Kimligi verilen dosya kategorisini siler.
+    /// <summary>
+    /// Kimligi verilen dosya kategorisini siler.
+    /// </summary>
+    /// <param name="id">Silinecek FileCategory kaydinin kimligi.</param>
+    /// <remarks>
+    /// Kategoriye bagli StoredFile kaydi varsa iliski kurali silmeyi engeller. Basarili istekte
+    /// iceriksiz cevap dondurulur.
+    /// </remarks>
     [HttpDelete(FileCategoryRoutes.ById)]
     [Authorize(FileManagementPermissions.FileCategories.Manage)]
     public virtual async Task<Result> Delete(Guid id)

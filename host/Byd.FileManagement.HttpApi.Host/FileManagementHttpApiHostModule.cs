@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -54,6 +55,13 @@ public class FileManagementHttpApiHostModule : AbpModule
         {
             options.SwaggerDoc("v1", new OpenApiInfo { Title = "FileManagement API", Version = "v1" });
             options.CustomSchemaIds(type => type.FullName);
+
+            var xmlDocumentationFile = $"{typeof(FileManagementHttpApiModule).Assembly.GetName().Name}.xml";
+            var xmlDocumentationPath = Path.Combine(AppContext.BaseDirectory, xmlDocumentationFile);
+            if (File.Exists(xmlDocumentationPath))
+            {
+                options.IncludeXmlComments(xmlDocumentationPath, includeControllerXmlComments: true);
+            }
         });
     }
     //todo auth gelince kapatılacak 
@@ -87,6 +95,7 @@ public class FileManagementHttpApiHostModule : AbpModule
         // Uclardaki [Authorize] metadatasi bu middleware olmadan calismaz; yoksa istek 500 doner.
         app.UseAuthorization();
         app.UseCoreExtensions();//core module
+        app.UseFileManagement();//bu modulun acilis isi: MinioSettings ayarini bellege yukler
         app.UseConfiguredEndpoints();
         return Task.CompletedTask;
     }

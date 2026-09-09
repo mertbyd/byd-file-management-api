@@ -11,6 +11,11 @@ public static class StoredFileRoutes
     public const string ById = "{id:guid}";
     public const string ByExternalIds = "by-external-ids";
     public const string ByCategory = "by-category";
+    public const string ByCategoryWithContent = "by-category/with-content";
+    public const string ByExternalIdAndCategoryWithContent = "by-external-id-and-category/with-content";
     public const string FilteredList = "filtered-list";
     public const string FilteredCount = "filtered-count";
+    public const string Upload = "upload";
+    public const string Download = "{id:guid}/download";
+    public const string DownloadContent = "{id:guid}/download/content";
 }
