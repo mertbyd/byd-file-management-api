@@ -15,10 +15,10 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "Byd.FileManagement.DemoApp": {
+    "Byd.FileManagement.HttpApi.Host": {
       "commandName": "Project",
       "launchBrowser": true,
-      "applicationUrl": "http://127.0.0.1:5011;https://localhost:44348",
+      "applicationUrl": "https://localhost:44348",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
