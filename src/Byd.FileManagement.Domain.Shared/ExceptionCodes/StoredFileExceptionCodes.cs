@@ -1,3 +1,5 @@
+using Byd.CoreExtensions.ExceptionCodes;
+
 namespace Byd.FileManagement.ExceptionCodes;
 
 /// <summary>
@@ -13,4 +15,10 @@ public static class StoredFileExceptionCodes
     public const string UnresolvedContentType = Prefix + ":00001";
 
     public const string DataTooLarge = Prefix + ":00002";
+
+    // Dosya adi kalicilik sinirini asiyor.
+    public const string FileNameTooLong = Prefix + ":00003";
+
+    // Ortak yukleme alanlarinin eksik deger kodu bounded validator sahibinden okunur.
+    public const string RequiredValueMissing = GeneralExceptionCodes.RequiredValueMissing;
 }

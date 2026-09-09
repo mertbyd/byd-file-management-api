@@ -14,6 +14,7 @@
     "FileManagement.FileCategory:00001": "Dosya kategorisi adı zorunludur.",
     "FileManagement.FileCategory:00002": "Dosya kategorisi adı 128 karakteri aşamaz.",
     "FileManagement.StoredFile:00002": "Dosya izin verilen azami boyutu asiyor.",
+    "FileManagement.StoredFile:00003": "Dosya adi 260 karakteri asamaz.",
     "FileManagement.FileStorage:00001": "Zorunlu dosya depolama ayari {SettingKey} tanimlanmamis."
   }
 }

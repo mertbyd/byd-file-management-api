@@ -14,6 +14,7 @@
     "FileManagement.FileCategory:00001": "File category name is required.",
     "FileManagement.FileCategory:00002": "File category name cannot exceed 128 characters.",
     "FileManagement.StoredFile:00002": "The file exceeds the maximum allowed size.",
+    "FileManagement.StoredFile:00003": "File name cannot exceed 260 characters.",
     "FileManagement.FileStorage:00001": "Required file storage setting {SettingKey} is not configured."
   }
 }
