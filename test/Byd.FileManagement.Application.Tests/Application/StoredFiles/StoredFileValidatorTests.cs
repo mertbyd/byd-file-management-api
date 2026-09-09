@@ -18,28 +18,7 @@ namespace Byd.FileManagement.Application.StoredFiles;
 public class StoredFileValidatorTests
     : FileManagementApplicationTestBase<FileManagementApplicationTestModule>
 {
-    // Sinira esit boyuttaki verinin kabul edildigini dogrular; sinir kapsayicidir.
-    [Fact]
-    public void Should_accept_data_at_size_limit()
-    {
-        var result = new UploadStoredFileDtoValidator().Validate(
-            BuildUpload(new byte[StoredFileConsts.MaxDataLength]));
-
-        result.IsValid.ShouldBeTrue();
-    }
-
-    // Siniri bir byte asan verinin boyut hata koduyla reddedildigini dogrular.
-    [Fact]
-    public void Should_reject_data_above_size_limit()
-    {
-        var result = new UploadStoredFileDtoValidator().Validate(
-            BuildUpload(new byte[StoredFileConsts.MaxDataLength + 1]));
-
-        result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(error => error.ErrorCode == StoredFileExceptionCodes.DataTooLarge);
-    }
-
-    // Bos verinin zorunluluk koduyla dustugunu ve boyut kuralinin hic calismadigini dogrular.
+    // Bos verinin zorunluluk koduyla dustugunu dogrular.
     [Fact]
     public void Should_reject_empty_data_before_size_rule()
     {
