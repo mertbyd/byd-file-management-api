@@ -22,6 +22,14 @@ public interface IStoredFileAppService : IApplicationService
     // Bir is kaydinin verilen kategorideki dosyalarini getirir.
     Task<List<StoredFileDto>> GetListByCategoryAsync(Guid externalId, Guid categoryId);
 
+    // Verilen kategorideki dosyalari metadata ve byte icerikleriyle getirir.
+    Task<List<StoredFileWithContentDto>> GetListWithContentByCategoryAsync(Guid categoryId);
+
+    // Bir is kaydinin verilen kategorideki dosyalarini metadata ve byte icerikleriyle getirir.
+    Task<List<StoredFileWithContentDto>> GetListWithContentByExternalIdAndCategoryAsync(
+        Guid externalId,
+        Guid categoryId);
+
     // Filtre, siralama ve sayfalama uygulanmis saklanan dosya listesini getirir.
     Task<List<StoredFileDto>> GetFilteredListAsync(StoredFileListInput input);
 

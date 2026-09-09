@@ -34,10 +34,12 @@ public class EfCoreStoredFileRepository
     {
     }
 
-    // StoredFile okuma sorgularina DTO'nun CategoryName kaynagini ekler.
+    // StoredFile okuma sorgularina DTO'nun CategoryName ve StatusName kaynaklarini ekler.
     public override async Task<IQueryable<StoredFile>> WithDetailsAsync()
     {
-        return (await GetQueryableAsync()).Include(entity => entity.Category);
+        return (await GetQueryableAsync())
+            .Include(entity => entity.Category)
+            .Include(entity => entity.Status);
     }
 
     // Is kaydi kimliklerinin onaylanmis dosyalarini veritabaninda tek sorguyla getirir.
@@ -56,6 +58,16 @@ public class EfCoreStoredFileRepository
         CancellationToken cancellationToken = default)
     {
         return await InCategory(OnlyApproved(await WithDetailsAsync()), externalId, categoryId)
+            .ToListAsync(cancellationToken);
+    }
+
+    // Verilen kategorideki onaylanmis dosyalari veritabaninda filtreleyerek getirir.
+    public virtual async Task<List<StoredFile>> GetListByCategoryIdAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default)
+    {
+        return await OnlyApproved(await WithDetailsAsync())
+            .Where(entity => entity.CategoryId == categoryId)
             .ToListAsync(cancellationToken);
     }
 

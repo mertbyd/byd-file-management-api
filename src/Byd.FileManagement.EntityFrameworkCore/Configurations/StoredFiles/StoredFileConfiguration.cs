@@ -36,7 +36,7 @@ public sealed class StoredFileConfiguration : IEntityTypeConfiguration<StoredFil
             .OnDelete(DeleteBehavior.Restrict);
 
         // Durum lookup'i sistem verisidir; silinmesi dosya kayitlarini adressiz birakir.
-        builder.HasOne<StoredFileStatus>()
+        builder.HasOne(entity => entity.Status)
             .WithMany()
             .HasForeignKey(entity => entity.StatusId)
             .OnDelete(DeleteBehavior.Restrict);

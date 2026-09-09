@@ -64,6 +64,26 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
         return Mapper.Map(entities);
     }
 
+    // Verilen kategorideki dosya kayitlarini tek sorguda, byte'larini blob depodan getirir.
+    public virtual async Task<List<StoredFileWithContentDto>> GetListWithContentByCategoryAsync(Guid categoryId)
+    {
+        var cancellationToken = CancellationTokenProvider.Token;
+        var entities = await Repository.GetListByCategoryIdAsync(categoryId, cancellationToken);
+
+        return await ReadWithContentAsync(entities, cancellationToken);
+    }
+
+    // Bir is kaydinin verilen kategorideki dosya kayitlarini ve byte'larini getirir.
+    public virtual async Task<List<StoredFileWithContentDto>> GetListWithContentByExternalIdAndCategoryAsync(
+        Guid externalId,
+        Guid categoryId)
+    {
+        var cancellationToken = CancellationTokenProvider.Token;
+        var entities = await Repository.GetListByCategoryAsync(externalId, categoryId, cancellationToken);
+
+        return await ReadWithContentAsync(entities, cancellationToken);
+    }
+
     // Liste girdisini dogrular, dinamik sorguyu repository'de calistirir ve sonucu esler.
     public virtual async Task<List<StoredFileDto>> GetFilteredListAsync(StoredFileListInput input)
     {
@@ -128,5 +148,20 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
     {
         await Repository.DeleteAsync(entity, autoSave: true, cancellationToken: cancellationToken);
         await BlobContainer.DeleteAsync(entity.BlobName, cancellationToken);
+    }
+
+    // Her kaydin blob byte'larini okuyup metadata ile ayni sirada birlestirir.
+    private async Task<List<StoredFileWithContentDto>> ReadWithContentAsync(
+        List<StoredFile> entities,
+        CancellationToken cancellationToken)
+    {
+        var files = new List<StoredFileWithContentDto>(entities.Count);
+        foreach (var entity in entities)
+        {
+            var data = await BlobContainer.GetAllBytesAsync(entity.BlobName, cancellationToken);
+            files.Add(Mapper.MapWithContent(entity, data));
+        }
+
+        return files;
     }
 }

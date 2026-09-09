@@ -22,6 +22,8 @@ public class StoredFile : AuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? OrganizationId { get; internal set; }
     // Kaydin onay durumu; okuma uclari yalniz Onayli kayitlari dondurur.
     public Guid StatusId { get; internal set; }
+    // DTO'daki StatusId-StatusName ciftinin guncel ad kaynagidir.
+    public StoredFileStatus Status { get; internal set; } = default!;
     // Dosyanin bagli oldugu FileCategory kaydinin kimligi.
     public Guid CategoryId { get; internal set; }
     // DTO'daki CategoryId-CategoryName ciftinin guncel ad kaynagidir.

@@ -29,4 +29,9 @@ public interface IStoredFileRepository : IExtendedRepository<StoredFile>
         Guid externalId,
         Guid categoryId,
         CancellationToken cancellationToken = default);
+
+    // Verilen kategorideki tum onaylanmis dosyalari getirir.
+    Task<List<StoredFile>> GetListByCategoryIdAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
 }

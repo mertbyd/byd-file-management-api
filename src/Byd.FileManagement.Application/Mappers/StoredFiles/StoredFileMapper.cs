@@ -20,6 +20,9 @@ public partial class StoredFileMapper
     // Saklanan dosya entity listesini public cevap listesine esler.
     public partial List<StoredFileDto> Map(List<StoredFile> source);
 
+    // Saklanan dosya metadata alanlariyla depodan okunan byte'lari tek cevapta esler.
+    public partial StoredFileWithContentDto MapWithContent(StoredFile source, byte[] data);
+
     // Yukleme istegini Manager'in bekledigi domain create modeline esler.
     public partial StoredFileCreateModel Map(UploadStoredFileDto source);
 
