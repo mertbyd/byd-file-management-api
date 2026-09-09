@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -54,6 +55,13 @@ public class FileManagementHttpApiHostModule : AbpModule
         {
             options.SwaggerDoc("v1", new OpenApiInfo { Title = "FileManagement API", Version = "v1" });
             options.CustomSchemaIds(type => type.FullName);
+
+            var xmlDocumentationFile = $"{typeof(FileManagementHttpApiModule).Assembly.GetName().Name}.xml";
+            var xmlDocumentationPath = Path.Combine(AppContext.BaseDirectory, xmlDocumentationFile);
+            if (File.Exists(xmlDocumentationPath))
+            {
+                options.IncludeXmlComments(xmlDocumentationPath, includeControllerXmlComments: true);
+            }
         });
     }
     //todo auth gelince kapatılacak 
