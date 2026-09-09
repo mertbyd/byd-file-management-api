@@ -1,7 +1,5 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Byd.CoreExtensions;
-using Byd.FileManagement.Consts;
 using Byd.FileManagement.Options;
 using Volo.Abp.Application;
 using Volo.Abp.BlobStoring;
@@ -20,26 +18,23 @@ namespace Byd.FileManagement;
     typeof(AbpBlobStoringModule),
     typeof(AbpBlobStoringMinioModule)
     )]
-// islevi: Uygulama servislerini kaydeder ve modulun tipli blob container'ini yapilandirir.
-// sistemdeki gorevi: Depolama kablolamasi modulun isidir; tuketen host yalniz appsettings'e
-// FileManagement:FileStorage bolumunu koyar, kablolama kodu yazmaz.
+// islevi: Uygulama servislerini kaydeder ve modulun depolama varsayilanini koyar.
+// sistemdeki gorevi: Baglanti bilgisi ABP setting management'ta MinioSettings grubunda durur ve
+// container acilista UseFileManagement icinde baglanir. Modul hicbir yapilandirma dosyasi
+// okumaz.
 public class FileManagementApplicationModule : AbpModule
 {
-    // Modulun varsayilanlarini koyar: kendi kablolamasini kurar ve depolama bilgilerini ayar
-    // bolumunden tipli options'a baglar.
+    // Modulun varsayilanini koyar: kendi depolama kablolamasini kurar.
     //
-    // NEDEN OKUMA BURADA. ABP once bagimli modulun PreConfigureServices'ini, sonra tuketen host'un
-    // kendi PreConfigureServices'ini calistirir. Okuma burada oldugu icin host hicbir sey yazmadan
-    // calisir; degerleri baska bir kaynaktan (kod, vault, ortam degiskeni) vermek isteyen host ise
-    // ayni options'i kendi PreConfigureServices'inde ezer ve sonra calistigi icin kazanir.
+    // NEDEN BURADA. ABP once bagimli modulun PreConfigureServices'ini, sonra tuketen host'un
+    // kendi PreConfigureServices'ini calistirir. Varsayilan burada oldugu icin host hicbir sey
+    // yazmadan calisir; kendi depolamasini kuracak host ayni options'i kendi
+    // PreConfigureServices'inde ezer ve sonra calistigi icin kazanir.
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
-        var configuration = context.Services.GetConfiguration();
-
         PreConfigure<FileManagementModuleOptions>(options =>
         {
             options.IsDefaultStorageEnabled = true;
-            configuration.GetSection(FileStorageConsts.SectionName).Bind(options.FileStorage);
         });
     }
 
@@ -52,12 +47,6 @@ public class FileManagementApplicationModule : AbpModule
         Configure<FileManagementModuleOptions>(options =>
         {
             options.IsDefaultStorageEnabled = moduleOptions.IsDefaultStorageEnabled;
-            options.FileStorage = moduleOptions.FileStorage;
         });
-
-        if (moduleOptions.IsDefaultStorageEnabled)
-        {
-            context.Services.AddFileManagementFileStorage(moduleOptions.FileStorage);
-        }
     }
 }

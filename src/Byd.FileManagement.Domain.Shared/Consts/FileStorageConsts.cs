@@ -1,22 +1,19 @@
+using Byd.FileManagement.Options;
+
 namespace Byd.FileManagement.Consts;
 
 /// <summary>
-/// Modulun tuketen host'un appsettings dosyasindan okudugu depolama anahtarlarini tanimlar.
+/// Depolama ayar grubunun alt ayar adlarini tanimlar.
 /// </summary>
-// islevi: Depolama ayar bolumunun adini ve tam anahtar yollarini derleme guvenli sabitlerde tutar.
-// sistemdeki gorevi: Altyapi yapilandirmasini modul kendi okur; tuketen host yalniz bu bolumu
-// appsettings'e koyar, kablolama kodu yazmaz. Anahtar yollari eksik ayar hatalarinda da kullanilir.
+// islevi: Grubun altindaki her alanin adini derleme guvenli sabitlerde tutar.
+// sistemdeki gorevi: Alan adi hem ayar adinin son parcasi hem de eksik alan hatasinin verisidir;
+// ikisi de buradan gelir, boylece ayar adi ile options alani ayrisamaz.
 public static class FileStorageConsts
 {
-    // Modulun depolama bilgilerini aradigi ayar bolumu; bolum baglamasi bu adla yapilir.
-    public const string SectionName = "FileManagement:FileStorage";
-
-    private const string Section = SectionName + ":";
-
-    public const string EndPointKey = Section + "EndPoint";
-    public const string AccessKeyKey = Section + "AccessKey";
-    public const string SecretKeyKey = Section + "SecretKey";
-    public const string BucketNameKey = Section + "BucketName";
-    public const string WithSslKey = Section + "WithSSL";
-    public const string CreateBucketIfNotExistsKey = Section + "CreateBucketIfNotExists";
+    public const string EndPointField = nameof(FileStorageOptions.EndPoint);
+    public const string AccessKeyField = nameof(FileStorageOptions.AccessKey);
+    public const string SecretKeyField = nameof(FileStorageOptions.SecretKey);
+    public const string BucketNameField = nameof(FileStorageOptions.BucketName);
+    public const string WithSslField = nameof(FileStorageOptions.WithSsl);
+    public const string CreateBucketIfNotExistsField = nameof(FileStorageOptions.CreateBucketIfNotExists);
 }

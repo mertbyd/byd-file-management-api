@@ -4,9 +4,9 @@ namespace Byd.FileManagement.Options;
 /// Modulun blob container'ini baglarken kullandigi depolama bilgilerini tasir.
 /// </summary>
 // islevi: MinIO baglanti alanlarini tek tipli bir sozlesmede toplar.
-// sistemdeki gorevi: Modul ile ayar kaynagi arasindaki tek sinirdir. Degerler modulun kendi
-// PreConfigureServices'inde appsettings'ten baglanir; kendi kaynagindan beslemek isteyen host
-// ayni options'i kendi PreConfigureServices'inde ezer ve appsettings'e hic dokunmaz.
+// sistemdeki gorevi: Modul ile ayar kaynagi arasindaki tek sinirdir. Alanlar acilista
+// MinioSettings grubunun alt ayarlarindan tek tek okunur; modul hicbir yapilandirma dosyasi
+// okumaz, deger yalnizca setting management uzerinden girilir.
 public class FileStorageOptions
 {
     // MinIO sunucusunun adresi, ornek "localhost:9000". Sema icermez.
@@ -25,5 +25,6 @@ public class FileStorageOptions
     public bool WithSsl { get; set; }
 
     // Bucket yoksa modulun onu kendisi olusturup olusturmayacagi.
-    public bool CreateBucketIfNotExists { get; set; } = true;
+    // Varsayilan burada degil, ayar tanimindadir; iki yerde durursa ayrisir.
+    public bool CreateBucketIfNotExists { get; set; }
 }
