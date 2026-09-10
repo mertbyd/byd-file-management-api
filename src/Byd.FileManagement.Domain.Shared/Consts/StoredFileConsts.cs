@@ -1,3 +1,5 @@
+using System;
+
 namespace Byd.FileManagement.Consts;
 
 /// <summary>
@@ -33,4 +35,7 @@ public static class StoredFileConsts
     // byte'lar JSON icinde base64 tasindigi icin 20 MB ikili veri yaklasik 27 MB govde eder ve
     // ASP.NET Core'un varsayilan 30 MB istek govdesi sinirinin altinda kalir.
     public const int MaxDataLength = 20 * 1024 * 1024;
+
+    // MinIO presigned baglantilarinin kabul ettigi azami gecerlilik suresi.
+    public static readonly TimeSpan MaxPresignedExpiry = TimeSpan.FromDays(7);
 }

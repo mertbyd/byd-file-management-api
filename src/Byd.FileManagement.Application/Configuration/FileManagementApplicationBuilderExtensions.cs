@@ -51,16 +51,7 @@ public static class FileManagementApplicationBuilderExtensions
 
         var settingProvider = scope.ServiceProvider.GetRequiredService<ISettingProvider>();
 
-        var storage = new FileStorageOptions
-        {
-            EndPoint = await settingProvider.GetOrNullAsync(FileManagementSettings.Minio.EndPoint),
-            AccessKey = await settingProvider.GetOrNullAsync(FileManagementSettings.Minio.AccessKey),
-            SecretKey = await settingProvider.GetOrNullAsync(FileManagementSettings.Minio.SecretKey),
-            BucketName = await settingProvider.GetOrNullAsync(FileManagementSettings.Minio.BucketName),
-            WithSsl = await settingProvider.IsTrueAsync(FileManagementSettings.Minio.WithSsl),
-            CreateBucketIfNotExists =
-                await settingProvider.IsTrueAsync(FileManagementSettings.Minio.CreateBucketIfNotExists)
-        };
+        var storage = await settingProvider.ReadFileStorageAsync();
 
         await unitOfWork.CompleteAsync();
 

@@ -10,10 +10,11 @@
     "Permission:StoredFiles": "Saklanan dosyalar",
     "Permission:StoredFiles.View": "Saklanan dosyaları görüntüleme",
     "Permission:StoredFiles.Manage": "Saklanan dosyaları yükleme ve silme",
-    "FileManagement.StoredFile:00001": "Dosyanın içerik türü adından çözülemedi.",
-    "FileManagement.FileCategory:00001": "Dosya kategorisi adı zorunludur.",
-    "FileManagement.FileCategory:00002": "Dosya kategorisi adı 128 karakteri aşamaz.",
-    "FileManagement.StoredFile:00002": "Dosya izin verilen azami boyutu asiyor.",
-    "FileManagement.FileStorage:00001": "Zorunlu dosya depolama ayari {SettingKey} tanimlanmamis."
+    "FileManagement:010001": "Dosyanın içerik türü adından çözülemedi.",
+    "FileManagement:020001": "Dosya kategorisi adı zorunludur.",
+    "FileManagement:020002": "Dosya kategorisi adı 128 karakteri aşamaz.",
+    "FileManagement:010002": "Dosya izin verilen azami boyutu asiyor.",
+    "FileManagement:010003": "Dosya adi 260 karakteri asamaz.",
+    "FileManagement:030001": "Zorunlu dosya depolama ayari {SettingKey} tanimlanmamis."
   }
 }

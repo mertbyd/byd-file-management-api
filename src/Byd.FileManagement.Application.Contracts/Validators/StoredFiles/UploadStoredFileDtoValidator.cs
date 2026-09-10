@@ -1,7 +1,6 @@
-using System;
 using FluentValidation;
-using Byd.CoreExtensions.ExceptionCodes;
 using Byd.FileManagement.Dtos.StoredFiles;
+using Byd.FileManagement.ExceptionCodes;
 
 namespace Byd.FileManagement.Validators.StoredFiles;
 
@@ -10,18 +9,15 @@ namespace Byd.FileManagement.Validators.StoredFiles;
 /// </summary>
 // islevi: Bos icerigi, bos dosya adini ve eksik kategori adresini depoya gitmeden reddeder.
 // sistemdeki gorevi: Yukleme ucunun public girdi validator'idir.
-public class UploadStoredFileDtoValidator : AbstractValidator<UploadStoredFileDto>
+// mirastan gelen: StoredFileUploadInputDtoValidatorBase -> ExternalId, CategoryId ve FileName kurallari.
+// burada yazilan: byte icerigin zorunluluk kurali.
+public sealed class UploadStoredFileDtoValidator
+    : StoredFileUploadInputDtoValidatorBase<UploadStoredFileDto>
 {
     // Yukleme isteginin zorunluluk kurallarini tanimlar.
     public UploadStoredFileDtoValidator()
     {
         RuleFor(input => input.Data)
-            .NotEmpty().WithErrorCode(GeneralExceptionCodes.RequiredValueMissing);
-        RuleFor(input => input.FileName)
-            .NotEmpty().WithErrorCode(GeneralExceptionCodes.RequiredValueMissing);
-        RuleFor(input => input.ExternalId)
-            .NotEqual(Guid.Empty).WithErrorCode(GeneralExceptionCodes.RequiredValueMissing);
-        RuleFor(input => input.CategoryId)
-            .NotEqual(Guid.Empty).WithErrorCode(GeneralExceptionCodes.RequiredValueMissing);
+            .NotEmpty().WithErrorCode(StoredFileExceptionCodes.RequiredValueMissing);
     }
 }

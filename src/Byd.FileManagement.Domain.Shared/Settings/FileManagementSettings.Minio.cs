@@ -32,5 +32,11 @@ public partial class FileManagementSettings
 
         // Bucket yoksa modulun onu kendisi olusturup olusturmayacagi.
         public const string CreateBucketIfNotExists = Default + "." + FileStorageConsts.CreateBucketIfNotExistsField;
+
+        // Presigned indirme baglantisinin gecerlilik suresi.
+        public const string PresignedGetExpiry = Default + "." + FileStorageConsts.PresignedGetExpiryField;
+
+        // Presigned yukleme baglantisinin gecerlilik suresi.
+        public const string PresignedPutExpiry = Default + "." + FileStorageConsts.PresignedPutExpiryField;
     }
 }

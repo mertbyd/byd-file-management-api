@@ -42,6 +42,15 @@ public interface IStoredFileAppService : IApplicationService
     // Kimligi verilen dosyanin byte'larini depodan okur.
     Task<DownloadStoredFileDto> DownloadAsync(Guid id);
 
+    // Kimligi verilen dosya icin dogrudan depolama indirme baglantisi uretir.
+    Task<PresignedUrlDto> GetPresignedUrlAsync(Guid id);
+
+    // Bir is kaydinin verilen kategorideki dosyalari icin indirme baglantilarini toplu uretir.
+    Task<List<PresignedUrlDto>> GetPresignedUrlsByExternalIdAndCategoryAsync(Guid externalId, Guid categoryId);
+
+    // Metadata kaydini acip byte tasimayan dogrudan depolama yukleme baglantisi uretir.
+    Task<PresignedUrlDto> CreatePresignedUploadAsync(PresignedUploadStoredFileDto input);
+
     // Kimligi verilen dosyanin kaydini ve byte'larini siler.
     Task DeleteAsync(Guid id);
 }

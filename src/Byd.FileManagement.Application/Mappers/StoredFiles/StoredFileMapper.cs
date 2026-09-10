@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Byd.FileManagement.Dtos.StoredFiles;
 using Byd.FileManagement.Entities.StoredFiles;
@@ -25,6 +26,14 @@ public partial class StoredFileMapper
 
     // Yukleme istegini Manager'in bekledigi domain create modeline esler.
     public partial StoredFileCreateModel Map(UploadStoredFileDto source);
+
+    // Presigned yukleme istegini ayni domain create modeline esler.
+    public partial StoredFileCreateModel Map(PresignedUploadStoredFileDto source);
+
+    // Kayit kimligini provider'dan gelen imzali URL ve bitis zamaniyla tek cevapta esler.
+    // Yukaridaki MapWithContent ile ayni sekil: entity alanlari calisma zamani degeriyle tek
+    // Mapperly metodunda birlesir, AppService'te elle nesne kurulmaz.
+    public partial PresignedUrlDto MapToPresignedUrl(StoredFile source, string url, DateTime expiresAt);
 
     // Kayit alanlarini depodan okunan byte'larla birlestirip indirme sozlesmesine esler.
     // ContentType kayitta yoktur; ayni kaynak alandan, asagidaki cozumleyiciyle uretilir.

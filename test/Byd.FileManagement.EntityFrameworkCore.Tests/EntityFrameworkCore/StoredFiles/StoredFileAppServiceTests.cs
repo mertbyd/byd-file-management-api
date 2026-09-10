@@ -23,6 +23,7 @@ namespace Byd.FileManagement.EntityFrameworkCore.StoredFiles;
 // sistemdeki gorevi: Iki fazli yazma ile silme sirasinin sozlesmesini koruyan testtir.
 public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBase
 {
+    private const string PresignedBucketName = "presigned-tests";
     private static readonly byte[] FirstContent = "ilk icerik"u8.ToArray();
     private static readonly byte[] SecondContent = "ikinci icerik"u8.ToArray();
 
@@ -201,6 +202,68 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
         });
     }
 
+    // Presigned GET baglantisinin kayit kimligi, bucket, blob adi ve ayarli sureyi tasidigini dogrular.
+    [Fact]
+    public async Task Should_create_presigned_download_url_for_stored_blob()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var appService = GetRequiredService<IStoredFileAppService>();
+            var categoryId = await CreateCategoryIdAsync();
+            var uploaded = await appService.UploadAsync(
+                BuildUpload(Guid.NewGuid(), categoryId, FirstContent, "rapor.pdf"));
+
+            var result = await appService.GetPresignedUrlAsync(uploaded.Id);
+
+            result.OriginalFileName.ShouldBe("rapor.pdf");
+            // host/ oneki cercevenin kendi nesne anahtari kuralidir; UploadAsync byte'i ayni
+            // anahtara yazar. Onek dusulurse imzali URL var olmayan bir nesneyi gosterir.
+            result.Url.ShouldContain($"/{PresignedBucketName}/host/{uploaded.Id:N}");
+            result.Url.ShouldContain("X-Amz-Expires=3600");
+            result.ExpiresAt.ShouldBeGreaterThan(DateTime.UtcNow.AddMinutes(59));
+        });
+    }
+
+    // Presigned PUT akisinin byte almadan metadata kaydi ve dogru nesne adresini urettigini dogrular.
+    [Fact]
+    public async Task Should_create_presigned_upload_url_without_content()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var appService = GetRequiredService<IStoredFileAppService>();
+            var categoryId = await CreateCategoryIdAsync();
+            var externalId = Guid.NewGuid();
+
+            var result = await appService.CreatePresignedUploadAsync(
+                BuildPresignedUpload(externalId, categoryId, "rapor.pdf"));
+
+            // Cevap kayit kimligi tasimaz; acilan kayit is kaydi ve kategori uzerinden bulunur.
+            var created = (await appService.GetListByCategoryAsync(externalId, categoryId))
+                .ShouldHaveSingleItem();
+            created.OriginalFileName.ShouldBe("rapor.pdf");
+            result.OriginalFileName.ShouldBe("rapor.pdf");
+            result.Url.ShouldContain($"/{PresignedBucketName}/host/{created.Id:N}");
+            result.Url.ShouldContain("X-Amz-Expires=7200");
+        });
+    }
+
+    // Presigned upload akisinin cozumlenemeyen uzantiyi baglanti uretmeden reddettigini dogrular.
+    [Fact]
+    public async Task Should_reject_unresolvable_presigned_upload_file_name()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var appService = GetRequiredService<IStoredFileAppService>();
+            var categoryId = await CreateCategoryIdAsync();
+
+            var exception = await Should.ThrowAsync<BusinessException>(async () =>
+                await appService.CreatePresignedUploadAsync(
+                    BuildPresignedUpload(Guid.NewGuid(), categoryId, "dosya.bilinmeyenuzanti")));
+
+            exception.Code.ShouldBe(ExceptionCodes.StoredFileExceptionCodes.UnresolvedContentType);
+        });
+    }
+
     // Verilen adrese yazan gecerli bir yukleme istegi kurar.
     private static UploadStoredFileDto BuildUpload(
         Guid externalId,
@@ -211,6 +274,20 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
         return new UploadStoredFileDto
         {
             Data = data.ToArray(),
+            FileName = fileName,
+            ExternalId = externalId,
+            CategoryId = categoryId
+        };
+    }
+
+    // Verilen adrese byte tasimadan yazan gecerli bir presigned yukleme istegi kurar.
+    private static PresignedUploadStoredFileDto BuildPresignedUpload(
+        Guid externalId,
+        Guid categoryId,
+        string fileName)
+    {
+        return new PresignedUploadStoredFileDto
+        {
             FileName = fileName,
             ExternalId = externalId,
             CategoryId = categoryId

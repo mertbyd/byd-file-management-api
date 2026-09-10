@@ -1,3 +1,4 @@
+using Byd.FileManagement.Consts;
 using Volo.Abp.Settings;
 
 namespace Byd.FileManagement.Settings;
@@ -38,11 +39,19 @@ public partial class FileManagementSettingDefinitionProvider
         context.Add(
             new SettingDefinition(
                 FileManagementSettings.Minio.WithSsl,
-                defaultValue: "false",
+                defaultValue: FileStorageConsts.WithSslDefault,
                 isVisibleToClients: false),
             new SettingDefinition(
                 FileManagementSettings.Minio.CreateBucketIfNotExists,
-                defaultValue: "true",
+                defaultValue: FileStorageConsts.CreateBucketIfNotExistsDefault,
+                isVisibleToClients: false),
+            new SettingDefinition(
+                FileManagementSettings.Minio.PresignedGetExpiry,
+                defaultValue: FileStorageConsts.PresignedGetExpiryDefault,
+                isVisibleToClients: false),
+            new SettingDefinition(
+                FileManagementSettings.Minio.PresignedPutExpiry,
+                defaultValue: FileStorageConsts.PresignedPutExpiryDefault,
                 isVisibleToClients: false));
     }
 }

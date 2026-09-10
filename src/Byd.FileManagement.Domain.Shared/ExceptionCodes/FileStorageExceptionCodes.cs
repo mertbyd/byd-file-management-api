@@ -7,10 +7,8 @@ namespace Byd.FileManagement.ExceptionCodes;
 // sistemdeki gorevi: Modul kablolamasi, localization ve log'lar icin tek hata sozlesmesi sahibidir.
 public static class FileStorageExceptionCodes
 {
-    public const string Prefix = "FileManagement.FileStorage";
-
     // Zorunlu bir depolama ayari bos birakildi; hangi anahtarin eksik oldugu hata verisinde tasinir.
-    public const string NotConfigured = Prefix + ":00001";
+    public const string NotConfigured = FileManagementErrorCodes.FileStorageGroup + "0001";
 
     // Eksik anahtarin adini tasiyan hata verisi alani; localization metni bu adla yer degistirir.
     public const string SettingKeyData = "SettingKey";

@@ -131,6 +131,60 @@ public class StoredFileController : FileManagementController
     }
 
     /// <summary>
+    /// Kimligi verilen dosya icin dogrudan depolamaya giden sureli indirme baglantisi uretir.
+    /// </summary>
+    /// <param name="id">Presigned indirme baglantisi uretilecek StoredFile kaydinin kimligi.</param>
+    /// <remarks>
+    /// Response value kayit Id, imzali Url ve mutlak ExpiresAt zamanini tasir. Dosya byte'lari
+    /// uygulama tarafindan okunmaz; istemci icerigi dogrudan MinIO'dan indirir.
+    /// </remarks>
+    [HttpGet(StoredFileRoutes.PresignedUrl)]
+    [Authorize(FileManagementPermissions.StoredFiles.View)]
+    public virtual async Task<Result<PresignedUrlDto>> GetPresignedUrl(Guid id)
+    {
+        var result = await AppService.GetPresignedUrlAsync(id);
+        return result;
+    }
+
+    /// <summary>
+    /// Bir is kaydinin verilen kategorideki tum dosyalari icin sureli indirme baglantilari uretir.
+    /// </summary>
+    /// <param name="externalId">Dosyalarin bagli oldugu is kaydi kimligi.</param>
+    /// <param name="categoryId">Dosyalarin ait oldugu kategori kimligi.</param>
+    /// <remarks>
+    /// Response value elemanlari kayit Id, OriginalFileName, imzali Url ve mutlak ExpiresAt
+    /// zamanini tasir. Eslesen kayit yoksa bos liste doner. Dosya byte'lari uygulama tarafindan
+    /// okunmaz; istemci her icerigi dogrudan MinIO'dan indirir.
+    /// </remarks>
+    [HttpGet(StoredFileRoutes.ByExternalIdAndCategoryPresignedUrls)]
+    [Authorize(FileManagementPermissions.StoredFiles.View)]
+    public virtual async Task<Result<List<PresignedUrlDto>>> GetPresignedUrlsByExternalIdAndCategory(
+        [FromQuery] Guid externalId,
+        [FromQuery] Guid categoryId)
+    {
+        var result = await AppService.GetPresignedUrlsByExternalIdAndCategoryAsync(externalId, categoryId);
+        return result;
+    }
+
+    /// <summary>
+    /// Dosya byte'i almadan metadata kaydi ve sureli dogrudan yukleme baglantisi uretir.
+    /// </summary>
+    /// <param name="input">Is kaydi, kategori ve ozgun dosya adi.</param>
+    /// <remarks>
+    /// Request byte icermez. Response value yeni kaydin Id, imzali PUT Url ve mutlak ExpiresAt
+    /// zamanini tasir; istemci byte'lari dogrudan MinIO'ya yollar. Yukleme tamamlanmazsa kalan
+    /// iceriksiz metadata kaydinin temizligi bu endpointin degil, F6b oksuz taramasinin isidir.
+    /// </remarks>
+    [HttpPost(StoredFileRoutes.PresignedUpload)]
+    [Authorize(FileManagementPermissions.StoredFiles.Manage)]
+    public virtual async Task<Result<PresignedUrlDto>> CreatePresignedUpload(
+        [FromBody] PresignedUploadStoredFileDto input)
+    {
+        var result = await AppService.CreatePresignedUploadAsync(input);
+        return result;
+    }
+
+    /// <summary>
     /// Kimligi verilen dosyayi tarayicinin dogrudan indirebilecegi HTTP dosya cevabi olarak getirir.
     /// </summary>
     /// <param name="id">Indirilecek StoredFile kaydinin kimligi.</param>
