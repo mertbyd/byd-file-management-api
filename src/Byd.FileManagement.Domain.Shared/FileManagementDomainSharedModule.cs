@@ -34,7 +34,10 @@ public class FileManagementDomainSharedModule : AbpModule
 
         Configure<AbpExceptionLocalizationOptions>(options =>
         {
-            options.MapCodeNamespace("FileManagement", typeof(FileManagementResource));
+            // Tek kayit yeterli: kodlarin ad alani duz, gruplama numarada.
+            options.MapCodeNamespace(
+                FileManagementErrorCodes.RootNamespace,
+                typeof(FileManagementResource));
         });
     }
 }
