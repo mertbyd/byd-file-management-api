@@ -147,6 +147,26 @@ public class StoredFileController : FileManagementController
     }
 
     /// <summary>
+    /// Bir is kaydinin verilen kategorideki tum dosyalari icin sureli indirme baglantilari uretir.
+    /// </summary>
+    /// <param name="externalId">Dosyalarin bagli oldugu is kaydi kimligi.</param>
+    /// <param name="categoryId">Dosyalarin ait oldugu kategori kimligi.</param>
+    /// <remarks>
+    /// Response value elemanlari kayit Id, OriginalFileName, imzali Url ve mutlak ExpiresAt
+    /// zamanini tasir. Eslesen kayit yoksa bos liste doner. Dosya byte'lari uygulama tarafindan
+    /// okunmaz; istemci her icerigi dogrudan MinIO'dan indirir.
+    /// </remarks>
+    [HttpGet(StoredFileRoutes.ByExternalIdAndCategoryPresignedUrls)]
+    [Authorize(FileManagementPermissions.StoredFiles.View)]
+    public virtual async Task<Result<List<PresignedUrlDto>>> GetPresignedUrlsByExternalIdAndCategory(
+        [FromQuery] Guid externalId,
+        [FromQuery] Guid categoryId)
+    {
+        var result = await AppService.GetPresignedUrlsByExternalIdAndCategoryAsync(externalId, categoryId);
+        return result;
+    }
+
+    /// <summary>
     /// Dosya byte'i almadan metadata kaydi ve sureli dogrudan yukleme baglantisi uretir.
     /// </summary>
     /// <param name="input">Is kaydi, kategori ve ozgun dosya adi.</param>

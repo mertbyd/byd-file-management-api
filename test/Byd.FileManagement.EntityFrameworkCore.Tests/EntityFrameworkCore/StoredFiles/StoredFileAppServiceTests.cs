@@ -215,7 +215,7 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
 
             var result = await appService.GetPresignedUrlAsync(uploaded.Id);
 
-            result.Id.ShouldBe(uploaded.Id);
+            result.OriginalFileName.ShouldBe("rapor.pdf");
             // host/ oneki cercevenin kendi nesne anahtari kuralidir; UploadAsync byte'i ayni
             // anahtara yazar. Onek dusulurse imzali URL var olmayan bir nesneyi gosterir.
             result.Url.ShouldContain($"/{PresignedBucketName}/host/{uploaded.Id:N}");
@@ -232,14 +232,18 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
         {
             var appService = GetRequiredService<IStoredFileAppService>();
             var categoryId = await CreateCategoryIdAsync();
+            var externalId = Guid.NewGuid();
 
             var result = await appService.CreatePresignedUploadAsync(
-                BuildPresignedUpload(Guid.NewGuid(), categoryId, "rapor.pdf"));
+                BuildPresignedUpload(externalId, categoryId, "rapor.pdf"));
 
-            result.Id.ShouldNotBe(Guid.Empty);
-            result.Url.ShouldContain($"/{PresignedBucketName}/host/{result.Id:N}");
+            // Cevap kayit kimligi tasimaz; acilan kayit is kaydi ve kategori uzerinden bulunur.
+            var created = (await appService.GetListByCategoryAsync(externalId, categoryId))
+                .ShouldHaveSingleItem();
+            created.OriginalFileName.ShouldBe("rapor.pdf");
+            result.OriginalFileName.ShouldBe("rapor.pdf");
+            result.Url.ShouldContain($"/{PresignedBucketName}/host/{created.Id:N}");
             result.Url.ShouldContain("X-Amz-Expires=7200");
-            (await appService.GetAsync(result.Id)).OriginalFileName.ShouldBe("rapor.pdf");
         });
     }
 

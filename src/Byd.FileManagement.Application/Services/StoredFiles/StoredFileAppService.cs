@@ -135,6 +135,30 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
         return Mapper.MapToPresignedUrl(entity, url, expiresAt);
     }
 
+    // Is kaydinin verilen kategorideki her dosyasi icin sureli GET baglantisini tek cagrida uretir.
+    //
+    // NEDEN LISTE. Bir is kaydinin ayni kategoride birden fazla dosyasi olabilir. Tekil uc ile
+    // baglanti almak once liste ucundan kimlikleri cekmeyi, sonra her kimlik icin ayri istek
+    // atmayi gerektirirdi. Imzalama yerel bir hesap oldugu icin dongu ag cagrisi yapmaz.
+    public virtual async Task<List<PresignedUrlDto>> GetPresignedUrlsByExternalIdAndCategoryAsync(
+        Guid externalId,
+        Guid categoryId)
+    {
+        var entities = await Repository.GetListByCategoryAsync(
+            externalId,
+            categoryId,
+            CancellationTokenProvider.Token);
+
+        var urls = new List<PresignedUrlDto>(entities.Count);
+        foreach (var entity in entities)
+        {
+            var (url, expiresAt) = await PresignedUrlProvider.CreateGetAsync(entity.BlobName);
+            urls.Add(Mapper.MapToPresignedUrl(entity, url, expiresAt));
+        }
+
+        return urls;
+    }
+
     // Girdiyi dogrular, metadata kaydini acar ve byte'i istemcinin PUT baglantisina birakir.
     // Istemci yuklemeyi tamamlamazsa iceriksiz metadata kalabilir; temizligi F6b oksuz taramasina aittir.
     public virtual async Task<PresignedUrlDto> CreatePresignedUploadAsync(PresignedUploadStoredFileDto input)
