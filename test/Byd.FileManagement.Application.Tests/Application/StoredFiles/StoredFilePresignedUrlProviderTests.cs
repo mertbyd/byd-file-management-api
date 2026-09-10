@@ -8,6 +8,9 @@ using Byd.FileManagement.ExceptionCodes;
 using Byd.FileManagement.Settings;
 using Shouldly;
 using Volo.Abp;
+using Volo.Abp.BlobStoring;
+using Volo.Abp.BlobStoring.Minio;
+using Volo.Abp.MultiTenancy;
 using Volo.Abp.Settings;
 using Volo.Abp.Timing;
 using Xunit;
@@ -17,7 +20,8 @@ namespace Byd.FileManagement.Application.StoredFiles;
 /// <summary>
 /// MinIO presigned URL saglayicisinin ayar ve imzalama sozlesmesini dogrular.
 /// </summary>
-// islevi: GET/PUT URL adresini, mutlak bitis zamanini ve gecersiz sure reddini ag cagirmadan kanitlar.
+// islevi: Nesne anahtarinin kapsam onekini, GET/PUT URL adresini, mutlak bitis zamanini ve gecersiz
+// sure reddini ag cagirmadan kanitlar.
 // sistemdeki gorevi: MinIO SDK sinirini ve ortak setting okuyucusunu izole eden provider testidir.
 public class StoredFilePresignedUrlProviderTests
 {
@@ -31,7 +35,7 @@ public class StoredFilePresignedUrlProviderTests
 
         var result = await provider.CreateGetAsync("blob-123");
 
-        result.Url.ShouldContain("/presigned-tests/blob-123");
+        result.Url.ShouldContain("/presigned-tests/host/blob-123");
         result.Url.ShouldContain("X-Amz-Expires=3600");
         result.ExpiresAt.ShouldBe(Now.AddHours(1));
     }
@@ -44,9 +48,23 @@ public class StoredFilePresignedUrlProviderTests
 
         var result = await provider.CreatePutAsync("blob-456");
 
-        result.Url.ShouldContain("/presigned-tests/blob-456");
+        result.Url.ShouldContain("/presigned-tests/host/blob-456");
         result.Url.ShouldContain("X-Amz-Expires=7200");
         result.ExpiresAt.ShouldBe(Now.AddHours(2));
+    }
+
+    // Tenant kapsaminda nesne anahtarinin tenants/{id}/ onekini tasidigini dogrular.
+    // Bu kural cercevenin IMinioBlobNameCalculator'undan gelir; ham blob adiyla imzalanan URL
+    // var olmayan bir nesneyi gosterirdi.
+    [Fact]
+    public async Task Should_scope_object_name_to_current_tenant()
+    {
+        var tenantId = Guid.NewGuid();
+        var provider = CreateProvider("01:00:00", "02:00:00", tenantId);
+
+        var result = await provider.CreateGetAsync("blob-123");
+
+        result.Url.ShouldContain($"/presigned-tests/tenants/{tenantId:D}/blob-123");
     }
 
     // Response bitis zamaninin MinIO imzasindaki tam saniye suresiyle ayni oldugunu dogrular.
@@ -79,7 +97,10 @@ public class StoredFilePresignedUrlProviderTests
     }
 
     // Teste ozel setting kaynagi ve sabit saatle provider kurar.
-    private static StoredFilePresignedUrlProvider CreateProvider(string getExpiry, string putExpiry)
+    private static StoredFilePresignedUrlProvider CreateProvider(
+        string getExpiry,
+        string putExpiry,
+        Guid? tenantId = null)
     {
         var values = new Dictionary<string, string?>
         {
@@ -96,6 +117,17 @@ public class StoredFilePresignedUrlProviderTests
         var clock = Substitute.For<IClock>();
         clock.Now.Returns(Now);
 
-        return new StoredFilePresignedUrlProvider(settingProvider, clock);
+        // Anahtar hesaplayicisi taklit edilmez: cercevenin gercek kurali kosar, boylece test
+        // presigned yolun IBlobContainer ile ayni nesneyi adresledigini kanitlar.
+        var currentTenant = Substitute.For<ICurrentTenant>();
+        currentTenant.Id.Returns(tenantId);
+        var configurationProvider = Substitute.For<IBlobContainerConfigurationProvider>();
+        configurationProvider.Get(Arg.Any<string>()).Returns(new BlobContainerConfiguration());
+
+        return new StoredFilePresignedUrlProvider(
+            settingProvider,
+            clock,
+            new DefaultMinioBlobNameCalculator(currentTenant),
+            configurationProvider);
     }
 }

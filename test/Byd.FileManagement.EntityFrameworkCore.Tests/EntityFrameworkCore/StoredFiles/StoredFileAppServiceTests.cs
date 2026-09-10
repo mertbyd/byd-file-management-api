@@ -216,7 +216,9 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
             var result = await appService.GetPresignedUrlAsync(uploaded.Id);
 
             result.Id.ShouldBe(uploaded.Id);
-            result.Url.ShouldContain($"/{PresignedBucketName}/{uploaded.Id:N}");
+            // host/ oneki cercevenin kendi nesne anahtari kuralidir; UploadAsync byte'i ayni
+            // anahtara yazar. Onek dusulurse imzali URL var olmayan bir nesneyi gosterir.
+            result.Url.ShouldContain($"/{PresignedBucketName}/host/{uploaded.Id:N}");
             result.Url.ShouldContain("X-Amz-Expires=3600");
             result.ExpiresAt.ShouldBeGreaterThan(DateTime.UtcNow.AddMinutes(59));
         });
@@ -235,7 +237,7 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
                 BuildPresignedUpload(Guid.NewGuid(), categoryId, "rapor.pdf"));
 
             result.Id.ShouldNotBe(Guid.Empty);
-            result.Url.ShouldContain($"/{PresignedBucketName}/{result.Id:N}");
+            result.Url.ShouldContain($"/{PresignedBucketName}/host/{result.Id:N}");
             result.Url.ShouldContain("X-Amz-Expires=7200");
             (await appService.GetAsync(result.Id)).OriginalFileName.ShouldBe("rapor.pdf");
         });
