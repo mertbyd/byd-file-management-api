@@ -167,13 +167,14 @@ public class StoredFileController : FileManagementController
     }
 
     /// <summary>
-    /// Dosya byte'i almadan metadata kaydi ve sureli dogrudan yukleme baglantisi uretir.
+    /// Dosya byte'i almadan sureli dogrudan yukleme baglantisi uretir.
     /// </summary>
     /// <param name="input">Is kaydi, kategori ve ozgun dosya adi.</param>
     /// <remarks>
-    /// Request byte icermez. Response value yeni kaydin Id, imzali PUT Url ve mutlak ExpiresAt
-    /// zamanini tasir; istemci byte'lari dogrudan MinIO'ya yollar. Yukleme tamamlanmazsa kalan
-    /// iceriksiz metadata kaydinin temizligi bu endpointin degil, F6b oksuz taramasinin isidir.
+    /// Request byte icermez. Response value imzali PUT Url, mutlak ExpiresAt ve OriginalFileName
+    /// tasir. Kayit bu endpointte acilmaz; istemci byte'lari MinIO'ya yukleyince MinIO olayi ile
+    /// acilir. Yukleme bittikten sonra kayit birkac saniye icinde okuma uclarinda gorunur. Yukleme
+    /// yapilmazsa geride kayit kalmaz.
     /// </remarks>
     [HttpPost(StoredFileRoutes.PresignedUpload)]
     [Authorize(FileManagementPermissions.StoredFiles.Manage)]

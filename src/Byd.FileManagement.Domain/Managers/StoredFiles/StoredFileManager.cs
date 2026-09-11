@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Byd.CoreExtensions.Managers;
 using Byd.CoreExtensions.Providers;
+using Byd.FileManagement.Consts;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.ExceptionCodes;
 using Byd.FileManagement.Interfaces.StoredFiles;
@@ -59,6 +60,38 @@ public class StoredFileManager(
             // OrganizationId su an bos kalir: ortam baglamini veren ICurrentOrganizationUnit
             // tuketmedigimiz referans core'da duruyor; kaynak baglanana kadar kolon null tasir.
             TenantId = CurrentTenant.Id
+        };
+    }
+
+    // Saglayiciya yazilan icerigin kabul edilen boyutta olup olmadigini soyler.
+    public virtual bool IsUploadSizeAllowed(long sizeBytes)
+        => sizeBytes <= StoredFileConsts.MaxDataLength;
+
+    // Bekleyen yuklemeden kaydi kurar. Kategori bu arada silindiyse null doner. Ad normalizasyonu
+    // ve icerik tipi kontrolu istek aninda CreateAsync'te yapildi; burada tekrarlanmaz.
+    public virtual async Task<StoredFile?> TryCreateFromPendingUploadAsync(
+        StoredFilePendingUploadModel model,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        var category = await categoryManager.TryGetByIdAsync(
+            model.CategoryId,
+            throwIfNotExists: false,
+            cancellationToken);
+        if (category is null)
+        {
+            return null;
+        }
+
+        return new StoredFile(model.Id)
+        {
+            TenantId = model.TenantId,
+            OrganizationId = model.OrganizationId,
+            CategoryId = model.CategoryId,
+            ExternalId = model.ExternalId,
+            ModuleName = model.ModuleName,
+            BlobName = model.BlobName,
+            OriginalFileName = model.OriginalFileName
         };
     }
 

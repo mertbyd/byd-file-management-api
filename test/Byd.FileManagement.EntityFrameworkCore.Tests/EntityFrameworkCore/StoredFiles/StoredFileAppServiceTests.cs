@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Byd.FileManagement.Models.StoredFiles;
 using Byd.FileManagement.Consts;
 using Byd.FileManagement.Dtos.StoredFiles;
 using Byd.FileManagement.Entities.FileCategories;
@@ -11,6 +12,7 @@ using Byd.FileManagement.Managers.FileCategories;
 using Byd.FileManagement.Services.StoredFiles;
 using Shouldly;
 using Volo.Abp;
+using Volo.Abp.Caching;
 using Xunit;
 
 namespace Byd.FileManagement.EntityFrameworkCore.StoredFiles;
@@ -224,7 +226,7 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
         });
     }
 
-    // Presigned PUT akisinin byte almadan metadata kaydi ve dogru nesne adresini urettigini dogrular.
+    // Presigned PUT akisinin satir acmadan bekleyen bilgi ve dogru nesne adresini urettigini dogrular.
     [Fact]
     public async Task Should_create_presigned_upload_url_without_content()
     {
@@ -237,12 +239,17 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
             var result = await appService.CreatePresignedUploadAsync(
                 BuildPresignedUpload(externalId, categoryId, "rapor.pdf"));
 
-            // Cevap kayit kimligi tasimaz; acilan kayit is kaydi ve kategori uzerinden bulunur.
-            var created = (await appService.GetListByCategoryAsync(externalId, categoryId))
-                .ShouldHaveSingleItem();
-            created.OriginalFileName.ShouldBe("rapor.pdf");
+            var blobName = Uri.UnescapeDataString(new Uri(result.Url).AbsolutePath)
+                .Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
+            var pending = await GetRequiredService<IDistributedCache<StoredFilePendingUploadModel>>()
+                .GetAsync(blobName);
+
+            (await appService.GetListByCategoryAsync(externalId, categoryId)).ShouldBeEmpty();
+            pending.ShouldNotBeNull();
+            pending.ExternalId.ShouldBe(externalId);
+            pending.CategoryId.ShouldBe(categoryId);
             result.OriginalFileName.ShouldBe("rapor.pdf");
-            result.Url.ShouldContain($"/{PresignedBucketName}/host/{created.Id:N}");
+            result.Url.ShouldContain($"/{PresignedBucketName}/host/{blobName}");
             result.Url.ShouldContain("X-Amz-Expires=7200");
         });
     }

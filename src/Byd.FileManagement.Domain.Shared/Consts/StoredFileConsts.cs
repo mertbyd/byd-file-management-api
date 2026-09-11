@@ -38,4 +38,14 @@ public static class StoredFileConsts
 
     // MinIO presigned baglantilarinin kabul ettigi azami gecerlilik suresi.
     public static readonly TimeSpan MaxPresignedExpiry = TimeSpan.FromDays(7);
+
+    // Bekleyen yuklemenin onbellekte, baglanti suresinin uzerine kaldigi pay. MinIO olayinin
+    // RabbitMQ uzerinden gecikmeli ulasmasi bilgiyi dusurmesin diye vardir.
+    public static readonly TimeSpan PendingUploadCacheMargin = TimeSpan.FromMinutes(5);
+
+    // MinIO'nun yukleme bildirimlerini yayinladigi RabbitMQ exchange'i.
+    public const string UploadNotificationExchangeName = "Byd.Minio";
+
+    // Uygulamanin bildirim kuyrugunun, host'un ClientName degerine eklenen soneki.
+    public const string UploadNotificationQueueSuffix = ".StoredFileUploads";
 }
