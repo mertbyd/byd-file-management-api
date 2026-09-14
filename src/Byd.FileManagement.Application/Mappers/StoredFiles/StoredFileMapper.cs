@@ -30,6 +30,9 @@ public partial class StoredFileMapper
     // Presigned yukleme istegini ayni domain create modeline esler.
     public partial StoredFileCreateModel Map(PresignedUploadStoredFileDto source);
 
+    // Manager'in kurdugu, henuz kaydedilmemis entity'yi onbellekte bekleyecek modele esler.
+    public partial StoredFilePendingUploadModel MapToPendingUpload(StoredFile source);
+
     // Kayit kimligini provider'dan gelen imzali URL ve bitis zamaniyla tek cevapta esler.
     // Yukaridaki MapWithContent ile ayni sekil: entity alanlari calisma zamani degeriyle tek
     // Mapperly metodunda birlesir, AppService'te elle nesne kurulmaz.

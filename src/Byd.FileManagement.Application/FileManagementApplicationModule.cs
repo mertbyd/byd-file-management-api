@@ -6,6 +6,7 @@ using Volo.Abp.BlobStoring;
 using Volo.Abp.BlobStoring.Minio;
 using Volo.Abp.Mapperly;
 using Volo.Abp.Modularity;
+using Volo.Abp.RabbitMQ;
 
 namespace Byd.FileManagement;
 
@@ -16,7 +17,8 @@ namespace Byd.FileManagement;
     typeof(AbpDddApplicationModule),
     typeof(AbpMapperlyModule),
     typeof(AbpBlobStoringModule),
-    typeof(AbpBlobStoringMinioModule)
+    typeof(AbpBlobStoringMinioModule),
+    typeof(AbpRabbitMqModule)
     )]
 // islevi: Uygulama servislerini kaydeder ve modulun depolama varsayilanini koyar.
 // sistemdeki gorevi: Baglanti bilgisi ABP setting management'ta MinioSettings grubunda durur ve

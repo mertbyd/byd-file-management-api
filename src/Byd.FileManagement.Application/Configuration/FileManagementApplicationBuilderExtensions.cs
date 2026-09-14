@@ -81,5 +81,9 @@ public static class FileManagementApplicationBuilderExtensions
                     minio.WithSSL = storage.WithSsl;
                     minio.CreateBucketIfNotExists = storage.CreateBucketIfNotExists;
                 }));
+
+        // Bildirim kuyrugu yalnizca modulun kendi depolamasi baglandiginda dinlenir; routing key bucket adidir.
+        await scope.ServiceProvider.GetRequiredService<StoredFileUploadNotificationConsumer>()
+            .StartAsync(storage.BucketName!);
     }
 }

@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
+using Microsoft.Extensions.Caching.Distributed;
 using Byd.FileManagement.BlobStoring;
+using Byd.FileManagement.Consts;
 using Byd.FileManagement.Dtos.StoredFiles;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.Interfaces.StoredFiles;
 using Byd.FileManagement.Managers.StoredFiles;
 using Byd.FileManagement.Mappers.StoredFiles;
+using Byd.FileManagement.Models.StoredFiles;
 using Volo.Abp.BlobStoring;
+using Volo.Abp.Caching;
 
 namespace Byd.FileManagement.Services.StoredFiles;
 
@@ -35,6 +39,9 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
 
     private StoredFilePresignedUrlProvider PresignedUrlProvider =>
         LazyGetRequiredService<StoredFilePresignedUrlProvider>();
+
+    private IDistributedCache<StoredFilePendingUploadModel> PendingUploadCache =>
+        LazyGetRequiredService<IDistributedCache<StoredFilePendingUploadModel>>();
 
     private IValidator<StoredFileListInput> ListValidator =>
         LazyGetRequiredService<IValidator<StoredFileListInput>>();
@@ -159,15 +166,16 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
         return urls;
     }
 
-    // Girdiyi dogrular, metadata kaydini acar ve byte'i istemcinin PUT baglantisina birakir.
-    // Istemci yuklemeyi tamamlamazsa iceriksiz metadata kalabilir; temizligi F6b oksuz taramasina aittir.
+    // Kayit burada acilmaz. Bilgi onbellekte bekler; MinIO "yazildi" olayi gelince
+    // StoredFileUploadNotificationConsumer satiri acar. Yukleme hic yapilmazsa onbellek suresi
+    // dolar ve geride hicbir sey kalmaz.
     public virtual async Task<PresignedUrlDto> CreatePresignedUploadAsync(PresignedUploadStoredFileDto input)
     {
         var cancellationToken = CancellationTokenProvider.Token;
         await PresignedUploadValidator.ValidateAndThrowAsync(input, cancellationToken);
         var entity = await Manager.CreateAsync(Mapper.Map(input), cancellationToken);
-        await Repository.InsertAsync(entity, autoSave: true, cancellationToken: cancellationToken);
         var (url, expiresAt) = await PresignedUrlProvider.CreatePutAsync(entity.BlobName);
+        await RememberPendingUploadAsync(entity, expiresAt, cancellationToken);
 
         return Mapper.MapToPresignedUrl(entity, url, expiresAt);
     }
@@ -190,6 +198,24 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
         await BlobContainer.SaveAsync(entity.BlobName, input.Data, overrideExisting: false, cancellationToken);
 
         return Mapper.Map(entity);
+    }
+
+    // Bekleyen yukleme bilgisini baglanti suresi ve olay gecikme payi boyunca saklar.
+    private async Task RememberPendingUploadAsync(
+        StoredFile entity,
+        DateTime expiresAt,
+        CancellationToken cancellationToken)
+    {
+        var options = new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow =
+                expiresAt - Clock.Now + StoredFileConsts.PendingUploadCacheMargin
+        };
+        await PendingUploadCache.SetAsync(
+            entity.BlobName,
+            Mapper.MapToPendingUpload(entity),
+            options,
+            token: cancellationToken);
     }
 
     // Once satiri, sonra byte'lari siler. Ters sirada silme yarim kalirsa kullanici var olmayan
