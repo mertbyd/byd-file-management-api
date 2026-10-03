@@ -20,13 +20,10 @@ public sealed class StoredFileConfiguration : IEntityTypeConfiguration<StoredFil
         builder.ToTable(StoredFileConsts.TableName, FileManagementDbProperties.DbSchema);
         builder.ConfigureByConvention();
         builder.Property(entity => entity.ModuleName)
-            .IsRequired()
             .HasMaxLength(StoredFileConsts.MaxModuleNameLength);
         builder.Property(entity => entity.BlobName)
-            .IsRequired()
             .HasMaxLength(StoredFileConsts.MaxBlobNameLength);
         builder.Property(entity => entity.OriginalFileName)
-            .IsRequired()
             .HasMaxLength(StoredFileConsts.MaxOriginalFileNameLength);
 
         // Kategori silinirse ona bagli dosya metadatasi sessizce kaybolmaz; silme engellenir.

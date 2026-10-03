@@ -50,27 +50,30 @@ public class StoredFileUploadedEventHandler(
     }
 
     // Satir yoksa boyut ve kategori kararina gore kaydi acar ya da yuklemeyi reddeder.
-    private async Task CompleteAsync(StoredFilePendingUploadModel pending, long size)
+    private async Task CompleteAsync(
+        StoredFilePendingUploadModel pending,
+        long size,
+        CancellationToken cancellationToken = default)
     {
-        if (await manager.TryGetByIdAsync(pending.Id, throwIfNotExists: false) is not null)
+        if (await manager.TryGetByIdAsync(pending.Id, throwIfNotExists: false, cancellationToken) is not null)
             return;
         if (!manager.IsUploadSizeAllowed(size))
         {
-            await RejectAsync(pending);
+            await RejectAsync(pending, cancellationToken);
             return;
         }
-        var entity = await manager.TryCreateFromPendingUploadAsync(pending, CancellationToken.None);
+        var entity = await manager.TryCreateFromPendingUploadAsync(pending, cancellationToken);
         if (entity is null)
         {
-            await RejectAsync(pending);
+            await RejectAsync(pending, cancellationToken);
             return;
         }
-        await repository.InsertAsync(entity);
+        await repository.InsertAsync(entity, cancellationToken: cancellationToken);
     }
 
     // Kabul edilmeyen yuklemenin byte'ini siler; kayit acilmadigi icin byte'in baska sahibi yoktur.
-    private async Task RejectAsync(StoredFilePendingUploadModel pending)
+    private async Task RejectAsync(StoredFilePendingUploadModel pending, CancellationToken cancellationToken = default)
     {
-        await blobContainer.DeleteAsync(pending.BlobName);
+        await blobContainer.DeleteAsync(pending.BlobName, cancellationToken);
     }
 }

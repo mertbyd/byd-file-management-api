@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Byd.FileManagement.Dtos.StoredFiles;
 using Volo.Abp.Application.Services;
@@ -14,43 +15,58 @@ namespace Byd.FileManagement.Services.StoredFiles;
 public interface IStoredFileAppService : IApplicationService
 {
     // Kimligi verilen saklanan dosya kaydini getirir.
-    Task<StoredFileDto> GetAsync(Guid id);
+    Task<StoredFileDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
     // Verilen is kayitlarinin dosyalarini toplu getirir.
-    Task<List<StoredFileDto>> GetListByExternalIdsAsync(IEnumerable<Guid> externalIds);
+    Task<List<StoredFileDto>> GetListByExternalIdsAsync(
+        IEnumerable<Guid> externalIds,
+        CancellationToken cancellationToken = default);
 
     // Bir is kaydinin verilen kategorideki dosyalarini getirir.
-    Task<List<StoredFileDto>> GetListByCategoryAsync(Guid externalId, Guid categoryId);
+    Task<List<StoredFileDto>> GetListByCategoryAsync(
+        Guid externalId,
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
 
     // Verilen kategorideki dosyalari metadata ve byte icerikleriyle getirir.
-    Task<List<StoredFileWithContentDto>> GetListWithContentByCategoryAsync(Guid categoryId);
+    Task<List<StoredFileWithContentDto>> GetListWithContentByCategoryAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
 
     // Bir is kaydinin verilen kategorideki dosyalarini metadata ve byte icerikleriyle getirir.
     Task<List<StoredFileWithContentDto>> GetListWithContentByExternalIdAndCategoryAsync(
         Guid externalId,
-        Guid categoryId);
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
 
     // Filtre, siralama ve sayfalama uygulanmis saklanan dosya listesini getirir.
-    Task<List<StoredFileDto>> GetFilteredListAsync(StoredFileListInput input);
+    Task<List<StoredFileDto>> GetFilteredListAsync(
+        StoredFileListInput input,
+        CancellationToken cancellationToken = default);
 
     // Ayni filtreye uyan toplam kayit sayisini getirir.
-    Task<int> GetFilteredCountAsync(StoredFileListInput input);
+    Task<int> GetFilteredCountAsync(StoredFileListInput input, CancellationToken cancellationToken = default);
 
     // Byte'lari depoya yazar ve okunabilir dosya kaydini dondurur.
-    Task<StoredFileDto> UploadAsync(UploadStoredFileDto input);
+    Task<StoredFileDto> UploadAsync(UploadStoredFileDto input, CancellationToken cancellationToken = default);
 
     // Kimligi verilen dosyanin byte'larini depodan okur.
-    Task<DownloadStoredFileDto> DownloadAsync(Guid id);
+    Task<DownloadStoredFileDto> DownloadAsync(Guid id, CancellationToken cancellationToken = default);
 
     // Kimligi verilen dosya icin dogrudan depolama indirme baglantisi uretir.
-    Task<PresignedUrlDto> GetPresignedUrlAsync(Guid id);
+    Task<PresignedUrlDto> GetPresignedUrlAsync(Guid id, CancellationToken cancellationToken = default);
 
     // Bir is kaydinin verilen kategorideki dosyalari icin indirme baglantilarini toplu uretir.
-    Task<List<PresignedUrlDto>> GetPresignedUrlsByExternalIdAndCategoryAsync(Guid externalId, Guid categoryId);
+    Task<List<PresignedUrlDto>> GetPresignedUrlsByExternalIdAndCategoryAsync(
+        Guid externalId,
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
 
     // Metadata kaydini acip byte tasimayan dogrudan depolama yukleme baglantisi uretir.
-    Task<PresignedUrlDto> CreatePresignedUploadAsync(PresignedUploadStoredFileDto input);
+    Task<PresignedUrlDto> CreatePresignedUploadAsync(
+        PresignedUploadStoredFileDto input,
+        CancellationToken cancellationToken = default);
 
     // Kimligi verilen dosyanin kaydini ve byte'larini siler.
-    Task DeleteAsync(Guid id);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

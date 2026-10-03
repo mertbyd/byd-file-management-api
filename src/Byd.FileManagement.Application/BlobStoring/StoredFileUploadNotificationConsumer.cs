@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Byd.FileManagement.Consts;
@@ -30,7 +31,7 @@ public class StoredFileUploadNotificationConsumer(
     : ISingletonDependency
 {
     // MinIO exchange'ini ve uygulamaya ozel kuyrugu acar, bucket routing key'ine baglar.
-    public virtual async Task StartAsync(string bucketName)
+    public virtual async Task StartAsync(string bucketName, CancellationToken cancellationToken = default)
     {
         var consumer = consumerFactory.Create(
             new ExchangeDeclareConfiguration(
@@ -45,7 +46,7 @@ public class StoredFileUploadNotificationConsumer(
     }
 
     // Bildirimdeki her nesne icin yukleme olayini hemen isletir; cozulemeyen govde atlanir.
-    public virtual async Task ProcessAsync(ReadOnlyMemory<byte> body)
+    public virtual async Task ProcessAsync(ReadOnlyMemory<byte> body, CancellationToken cancellationToken = default)
     {
         if (!MinioObjectCreatedNotification.TryParse(body.Span, out var notification))
         {

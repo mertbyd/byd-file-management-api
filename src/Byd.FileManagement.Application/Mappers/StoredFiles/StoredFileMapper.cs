@@ -38,21 +38,7 @@ public partial class StoredFileMapper
     // Mapperly metodunda birlesir, AppService'te elle nesne kurulmaz.
     public partial PresignedUrlDto MapToPresignedUrl(StoredFile source, string url, DateTime expiresAt);
 
-    // Kayit alanlarini depodan okunan byte'larla birlestirip indirme sozlesmesine esler.
-    // ContentType kayitta yoktur; ayni kaynak alandan, asagidaki cozumleyiciyle uretilir.
-    [MapProperty(
-        nameof(StoredFile.OriginalFileName),
-        nameof(DownloadStoredFileDto.ContentType),
-        Use = nameof(ResolveContentType))]
-    public partial DownloadStoredFileDto Map(StoredFile source, byte[] data);
-
-    // Dosya adindan MIME turunu uretir. Cozulemeyen uzanti yukleme aninda reddedildigi icin
-    // burada ikinci bir dogrulama yapilmaz.
-    //
-    // Default = false zorunlu: isaretlenmezse Mapperly bu metodu genel bir string->string donusumu
-    // sayar ve mapper'daki butun metin alanlarina uygular; o zaman FileName de MIME turune donusur.
-    // Bu isaretle metot yalnizca yukaridaki MapProperty'nin acikca cagirdigi yerde kullanilir.
-    [UserMapping(Default = false)]
-    private static string ResolveContentType(string originalFileName)
-        => MimeTypes.GetMimeType(originalFileName);
+    // Kayit alanlarini depodan okunan byte'lar ve Manager'in cozdugu icerik turuyla indirme sozlesmesine esler.
+    // MapToPresignedUrl ile ayni sekil: calisma zamani degerleri parametre adiyla hedef alana gider.
+    public partial DownloadStoredFileDto Map(StoredFile source, byte[] data, string contentType);
 }

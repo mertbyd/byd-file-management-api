@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,7 +36,9 @@ public static class FileManagementApplicationBuilderExtensions
     // Depolama ayarini kendi unit of work'unde okur ve container'i baglar.
     // Ayar hic tanimlanmamissa acilis durdurulmaz: modulu tuketen host'un diger yetenekleri
     // dosya depolamadan bagimsiz calisir. Eksiklik ilk dosya isleminde bildirilir.
-    private static async Task LoadFileStorageAsync(IServiceProvider serviceProvider)
+    private static async Task LoadFileStorageAsync(
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
 
@@ -51,9 +54,9 @@ public static class FileManagementApplicationBuilderExtensions
 
         var settingProvider = scope.ServiceProvider.GetRequiredService<ISettingProvider>();
 
-        var storage = await settingProvider.ReadFileStorageAsync();
+        var storage = await settingProvider.ReadFileStorageAsync(cancellationToken);
 
-        await unitOfWork.CompleteAsync();
+        await unitOfWork.CompleteAsync(cancellationToken);
 
         // Adres grubun varlik isaretidir: bos ise grup hic doldurulmamis demektir ve acilis
         // durdurulmaz. Adres doluysa grup kullanilmak istenmistir; eksik kalan alan asagida
@@ -84,6 +87,6 @@ public static class FileManagementApplicationBuilderExtensions
 
         // Bildirim kuyrugu yalnizca modulun kendi depolamasi baglandiginda dinlenir; routing key bucket adidir.
         await scope.ServiceProvider.GetRequiredService<StoredFileUploadNotificationConsumer>()
-            .StartAsync(storage.BucketName!);
+            .StartAsync(storage.BucketName!, cancellationToken);
     }
 }

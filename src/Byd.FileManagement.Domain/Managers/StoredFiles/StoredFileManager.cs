@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Distributed;
+using Byd.CoreExtensions.Interfaces;
 using Byd.CoreExtensions.Managers;
 using Byd.CoreExtensions.Providers;
+using Byd.FileManagement;
 using Byd.FileManagement.Consts;
 using Byd.FileManagement.Entities.StoredFiles;
 using Byd.FileManagement.ExceptionCodes;
@@ -10,6 +13,7 @@ using Byd.FileManagement.Interfaces.StoredFiles;
 using Byd.FileManagement.Managers.FileCategories;
 using Byd.FileManagement.Models.StoredFiles;
 using Volo.Abp;
+using Volo.Abp.Caching;
 
 namespace Byd.FileManagement.Managers.StoredFiles;
 
@@ -29,15 +33,21 @@ public class StoredFileManager(
     private CurrentModuleNameProvider ModuleNameProvider =>
         LazyServiceProvider.LazyGetRequiredService<CurrentModuleNameProvider>();
 
+    private ICurrentOrganization CurrentOrganization =>
+        LazyServiceProvider.LazyGetRequiredService<ICurrentOrganization>();
+
+    private IDistributedCache<StoredFilePendingUploadModel> PendingUploadCache =>
+        LazyServiceProvider.LazyGetRequiredService<IDistributedCache<StoredFilePendingUploadModel>>();
+
     // Kimligi verilen kaydi getirir; yoksa BaseManager lokalize NotFound firlatir.
-    public virtual async Task<StoredFile> EnsureExistsAsync(Guid id, CancellationToken cancellationToken)
+    public virtual async Task<StoredFile> EnsureExistsAsync(Guid id, CancellationToken cancellationToken = default)
         => (await TryGetByIdAsync(id, throwIfNotExists: true, cancellationToken))!;
 
     // Yazma on kosulu: dosyanin baglanacagi kategori gercekten var olmali.
     // Create modelini normalize edip byte'lari henuz yazilmamis yeni kaydi kurar.
     public virtual async Task<StoredFile> CreateAsync(
         StoredFileCreateModel model,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(model);
         await categoryManager.EnsureExistsAsync(model.CategoryId, cancellationToken);
@@ -54,12 +64,11 @@ public class StoredFileManager(
             // Blob adi opak ve carpismasizdir; orijinal ad hicbir zaman adresleme icin kullanilmaz.
             BlobName = id.ToString("N"),
             OriginalFileName = originalFileName,
-            // Kapsam cagirandan alinmaz; tenant ortam baglamindan okunur. ABP de IMultiTenant
-            // kaydi eklerken ayni degeri yazar; burada aciktan yazilir ki Manager'in dondurdugu
-            // entity kaydedilmeden once de kendi kapsamini tasisin.
-            // OrganizationId su an bos kalir: ortam baglamini veren ICurrentOrganizationUnit
-            // tuketmedigimiz referans core'da duruyor; kaynak baglanana kadar kolon null tasir.
-            TenantId = CurrentTenant.Id
+            // Kapsam cagirandan alinmaz; tenant ve organizasyon ortam baglamindan okunur. ABP de
+            // IMultiTenant kaydi eklerken ayni tenant'i yazar; burada aciktan yazilir ki Manager'in
+            // dondurdugu entity kaydedilmeden once de kendi kapsamini tasisin.
+            TenantId = CurrentTenant.Id,
+            OrganizationId = CurrentOrganization.Id
         };
     }
 
@@ -71,7 +80,7 @@ public class StoredFileManager(
     // ve icerik tipi kontrolu istek aninda CreateAsync'te yapildi; burada tekrarlanmaz.
     public virtual async Task<StoredFile?> TryCreateFromPendingUploadAsync(
         StoredFilePendingUploadModel model,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(model);
         var category = await categoryManager.TryGetByIdAsync(
@@ -94,6 +103,26 @@ public class StoredFileManager(
             OriginalFileName = model.OriginalFileName
         };
     }
+
+    // Bekleyen yukleme bilgisini baglanti suresi ve olay gecikme payi boyunca saklar.
+    public virtual async Task RememberPendingUploadAsync(
+        StoredFilePendingUploadModel model,
+        DateTime expiresAt,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        var options = new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow =
+                expiresAt - Clock.Now + StoredFileConsts.PendingUploadCacheMargin
+        };
+        await PendingUploadCache.SetAsync(model.BlobName, model, options, token: cancellationToken);
+    }
+
+    // Icerik turu kolonda tutulmaz; her okumada dosya adindan uretilir. Cozulemeyen uzanti yazma aninda
+    // reddedildigi icin burada ikinci bir dogrulama yapilmaz.
+    public virtual string ResolveContentType(string originalFileName)
+        => MimeTypes.GetMimeType(originalFileName);
 
     // Icerik tipi kolonda tutulmaz; her okumada dosya adindan cozulur. Bu yuzden cozulemeyen
     // bir ad kabul edilirse dosya sonradan dogru tiple sunulamaz, yazma aninda reddedilir.
