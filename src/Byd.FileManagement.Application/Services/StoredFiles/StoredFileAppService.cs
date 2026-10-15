@@ -6,10 +6,12 @@ using FluentValidation;
 using Byd.FileManagement.BlobStoring;
 using Byd.FileManagement.Dtos.StoredFiles;
 using Byd.FileManagement.Entities.StoredFiles;
+using Byd.FileManagement.Extensions.StoredFiles;
 using Byd.FileManagement.Interfaces.StoredFiles;
 using Byd.FileManagement.Managers.StoredFiles;
 using Byd.FileManagement.Mappers.StoredFiles;
 using Volo.Abp.BlobStoring;
+using Volo.Abp.EventBus.Distributed;
 
 namespace Byd.FileManagement.Services.StoredFiles;
 
@@ -32,6 +34,9 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
 
     private IBlobContainer<StoredFileBlobContainer> BlobContainer =>
         LazyGetRequiredService<IBlobContainer<StoredFileBlobContainer>>();
+
+    private IDistributedEventBus DistributedEventBus =>
+        LazyGetRequiredService<IDistributedEventBus>();
 
     private StoredFilePresignedUrlProvider PresignedUrlProvider =>
         LazyGetRequiredService<StoredFilePresignedUrlProvider>();
@@ -115,7 +120,7 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
         return await Repository.GetFilteredCountAsync(input, cancellationToken);
     }
 
-    // Girdiyi dogrular ve iki fazli yazma akisini calistirir.
+    // Girdiyi dogrular, iki fazli yazma akisini calistirir ve tamamlanma olayini yayinlar.
     public virtual async Task<StoredFileDto> UploadAsync(
         UploadStoredFileDto input,
         CancellationToken cancellationToken = default)
@@ -126,6 +131,8 @@ public class StoredFileAppService : FileManagementAppService, IStoredFileAppServ
         var entity = await Manager.CreateAsync(Mapper.Map(input), cancellationToken);
         await Repository.InsertAsync(entity, autoSave: true, cancellationToken: cancellationToken);
         await BlobContainer.SaveAsync(entity.BlobName, input.Data, overrideExisting: false, cancellationToken);
+
+        await DistributedEventBus.PublishAsync(entity.ToUploadCompletedEto());
 
         return Mapper.Map(entity);
     }

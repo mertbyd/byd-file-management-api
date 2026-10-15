@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Byd.FileManagement.BlobStoring;
 using Byd.FileManagement.Etos.StoredFiles;
+using Byd.FileManagement.Extensions.StoredFiles;
 using Byd.FileManagement.Interfaces.StoredFiles;
 using Byd.FileManagement.Managers.StoredFiles;
 using Byd.FileManagement.Models.StoredFiles;
@@ -9,6 +10,7 @@ using Volo.Abp.BlobStoring;
 using Volo.Abp.Caching;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.Uow;
 
@@ -34,7 +36,8 @@ public class StoredFileUploadedEventHandler(
     StoredFileManager manager,
     IStoredFileRepository repository,
     IBlobContainer<StoredFileBlobContainer> blobContainer,
-    ICurrentTenant currentTenant)
+    ICurrentTenant currentTenant,
+    IDistributedEventBus distributedEventBus)
     : ILocalEventHandler<StoredFileUploadedEto>, ITransientDependency
 {
     // Bekleyen yuklemenin tenant'ina gecip kaydi sonuclandirir ve bekleyen bilgiyi commit'e baglar.
@@ -69,6 +72,7 @@ public class StoredFileUploadedEventHandler(
             return;
         }
         await repository.InsertAsync(entity, cancellationToken: cancellationToken);
+        await distributedEventBus.PublishAsync(entity.ToUploadCompletedEto());
     }
 
     // Kabul edilmeyen yuklemenin byte'ini siler; kayit acilmadigi icin byte'in baska sahibi yoktur.
