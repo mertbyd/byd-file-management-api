@@ -16,14 +16,15 @@ namespace Byd.FileManagement.EntityFrameworkCore.FileCategories;
 // gerekir; bu da tuketicinin gercek davranisidir. Tekrarlanan kurulumu tek yerde tutar.
 public static class FileCategoryTestDataBuilder
 {
-    // Yeni bir kategori kurar ve kalici hale getirir.
+    // Yeni bir kategori kurar ve kalici hale getirir; azami boyut verilmezse modulun varsayilani gecer.
     public static async Task<FileCategory> InsertAsync(
         FileCategoryManager manager,
         IFileCategoryRepository repository,
+        long? maxFileSize = null,
         CancellationToken cancellationToken = default)
     {
         var category = await manager.CreateAsync(
-            new FileCategoryCreateModel { Name = $"Test kategorisi {Guid.NewGuid():N}" },
+            new FileCategoryCreateModel { Name = $"Test kategorisi {Guid.NewGuid():N}", MaxFileSize = maxFileSize },
             cancellationToken);
         await repository.InsertAsync(category, autoSave: true, cancellationToken: cancellationToken);
 

@@ -26,3 +26,9 @@ Modul `Byd.CoreExtensions` paketlerine baglidir; core'un host sozlesmesi de gece
   `BucketName`, `WithSsl`, `CreateBucketIfNotExists`, `PresignedGetExpiry`, `PresignedPutExpiry`.
 - Kendi depolama saglayicisini baglayan host `FileManagementModuleOptions.IsDefaultStorageEnabled`'i kapatir.
 - Pipeline'da `app.UseCoreExtensions()` cagrisindan sonra `app.UseFileManagement()` cagrilir.
+
+## Boyut siniri
+
+Presigned yukleme, dosyanin kategorisindeki `MaxFileSize` (byte) degerine gore kabul edilir; degeri bos kategori
+20 MB alir. Siniri asan yuklemenin byte'lari silinir ve kayit acilmaz. Byte yukleme (`UploadAsync`) HTTP uzerinden istek
+govdesi siniriyla sinirlidir; kategori siniri ona uygulanmaz.

@@ -72,14 +72,12 @@ public class StoredFileManager(
         };
     }
 
-    // Saglayiciya yazilan icerigin kabul edilen boyutta olup olmadigini soyler.
-    public virtual bool IsUploadSizeAllowed(long sizeBytes)
-        => sizeBytes <= StoredFileConsts.MaxDataLength;
-
-    // Bekleyen yuklemeden kaydi kurar. Kategori bu arada silindiyse null doner. Ad normalizasyonu
-    // ve icerik tipi kontrolu istek aninda CreateAsync'te yapildi; burada tekrarlanmaz.
+    // Bekleyen yuklemeden kaydi kurar. Kategori bu arada silindiyse ya da yazilan icerik kategorinin
+    // sinirini asiyorsa null doner. Ad normalizasyonu ve icerik tipi kontrolu istek aninda CreateAsync'te
+    // yapildi; burada tekrarlanmaz.
     public virtual async Task<StoredFile?> TryCreateFromPendingUploadAsync(
         StoredFilePendingUploadModel model,
+        long sizeBytes,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -87,7 +85,7 @@ public class StoredFileManager(
             model.CategoryId,
             throwIfNotExists: false,
             cancellationToken);
-        if (category is null)
+        if (category is null || sizeBytes > (category.MaxFileSize ?? StoredFileConsts.MaxDataLength))
         {
             return null;
         }

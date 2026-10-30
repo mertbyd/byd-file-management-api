@@ -24,7 +24,8 @@ namespace Byd.FileManagement.EntityFrameworkCore.StoredFiles;
 /// <summary>
 /// MinIO yukleme bildirimlerinin bekleyen presigned yuklemeleri tamamlamasini dogrular.
 /// </summary>
-// islevi: Basari ve tamamlanma olayi, boyut reddi, bilinmeyen nesne, bozuk mesaj, yeniden teslim ve silinen kategori akislarini sinar.
+// islevi: Basari ve tamamlanma olayi, varsayilan ve kategori boyut siniri, bilinmeyen nesne, bozuk mesaj, yeniden teslim ve
+// silinen kategori akislarini sinar.
 // sistemdeki gorevi: Ham RabbitMQ consumer'inin kalicilik ve onbellek sozlesmesini gercek PostgreSQL ile korur.
 public class StoredFileUploadNotificationConsumerTests : FileManagementEntityFrameworkCoreTestBase
 {
@@ -69,6 +70,33 @@ public class StoredFileUploadNotificationConsumerTests : FileManagementEntityFra
             (await Cache.GetAsync(pending.BlobName)).ShouldBeNull();
         });
         await _distributedEventBus.DidNotReceiveWithAnyArgs().PublishAsync(default(StoredFileUploadCompletedEto)!);
+    }
+
+    // Kategorinin yukselttigi sinirin varsayilanin uzerindeki yuklemeyi kabul ettigini dogrular.
+    [Fact]
+    public async Task Should_accept_upload_above_default_within_category_limit()
+    {
+        var pending = await CreatePendingAsync(StoredFileConsts.MaxDataLength * 100L);
+
+        await NotifyAsync(pending.BlobName, StoredFileConsts.MaxDataLength * 50L);
+
+        await WithUnitOfWorkAsync(async () =>
+            (await Repository.FindAsync(entity => entity.Id == pending.Id)).ShouldNotBeNull());
+    }
+
+    // Kategorinin kendi sinirini asan yuklemenin satir acmadan reddedildigini dogrular.
+    [Fact]
+    public async Task Should_reject_upload_above_category_limit()
+    {
+        var pending = await CreatePendingAsync(1000);
+
+        await NotifyAsync(pending.BlobName, 1001);
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            (await Repository.FindAsync(entity => entity.Id == pending.Id)).ShouldBeNull();
+            (await Cache.GetAsync(pending.BlobName)).ShouldBeNull();
+        });
     }
 
     // Onbellekte karsiligi olmayan blob bildiriminin bos islem oldugunu dogrular.
@@ -127,12 +155,13 @@ public class StoredFileUploadNotificationConsumerTests : FileManagementEntityFra
         GetRequiredService<IDistributedCache<StoredFilePendingUploadModel>>();
 
     // Yeni kategori ve presigned istek acip onbellekteki modeli dondurur.
-    private Task<StoredFilePendingUploadModel> CreatePendingAsync()
+    private Task<StoredFilePendingUploadModel> CreatePendingAsync(long? maxFileSize = null)
         => WithUnitOfWorkAsync(async () =>
         {
             var category = await FileCategoryTestDataBuilder.InsertAsync(
                 GetRequiredService<FileCategoryManager>(),
-                GetRequiredService<IFileCategoryRepository>());
+                GetRequiredService<IFileCategoryRepository>(),
+                maxFileSize);
             var result = await GetRequiredService<IStoredFileAppService>().CreatePresignedUploadAsync(
                 new PresignedUploadStoredFileDto
                 {

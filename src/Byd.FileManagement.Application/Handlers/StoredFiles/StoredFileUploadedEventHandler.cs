@@ -60,12 +60,7 @@ public class StoredFileUploadedEventHandler(
     {
         if (await manager.TryGetByIdAsync(pending.Id, throwIfNotExists: false, cancellationToken) is not null)
             return;
-        if (!manager.IsUploadSizeAllowed(size))
-        {
-            await RejectAsync(pending, cancellationToken);
-            return;
-        }
-        var entity = await manager.TryCreateFromPendingUploadAsync(pending, cancellationToken);
+        var entity = await manager.TryCreateFromPendingUploadAsync(pending, size, cancellationToken);
         if (entity is null)
         {
             await RejectAsync(pending, cancellationToken);

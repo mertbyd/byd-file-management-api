@@ -67,5 +67,6 @@ public class FileCategoryManager : BaseManager<FileCategory, Guid>
         await CheckAlreadyExistsAsync(other => other.Name == name, entity.Id, cancellationToken);
         entity.Name = name;
         entity.Code = model.Code;
+        entity.MaxFileSize = model.MaxFileSize;
     }
 }
