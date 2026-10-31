@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using Byd.FileManagement.Consts;
 using Byd.FileManagement.ExceptionCodes;
@@ -19,7 +20,9 @@ namespace Byd.FileManagement;
 public static class FileStorageConfigurationExtensions
 {
     // MinioSettings alanlarini tek kaynaktan tipli depolama sozlesmesine okur.
-    public static async Task<FileStorageOptions> ReadFileStorageAsync(this ISettingProvider settingProvider)
+    public static async Task<FileStorageOptions> ReadFileStorageAsync(
+        this ISettingProvider settingProvider,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(settingProvider);
 
@@ -35,11 +38,13 @@ public static class FileStorageConfigurationExtensions
             PresignedGetExpiry = await ReadExpiryAsync(
                 settingProvider,
                 FileManagementSettings.Minio.PresignedGetExpiry,
-                FileStorageConsts.PresignedGetExpiryField),
+                FileStorageConsts.PresignedGetExpiryField,
+                cancellationToken),
             PresignedPutExpiry = await ReadExpiryAsync(
                 settingProvider,
                 FileManagementSettings.Minio.PresignedPutExpiry,
-                FileStorageConsts.PresignedPutExpiryField)
+                FileStorageConsts.PresignedPutExpiryField,
+                cancellationToken)
         };
     }
 
@@ -74,7 +79,8 @@ public static class FileStorageConfigurationExtensions
     private static async Task<TimeSpan> ReadExpiryAsync(
         ISettingProvider settingProvider,
         string settingName,
-        string fieldName)
+        string fieldName,
+        CancellationToken cancellationToken = default)
     {
         var value = await settingProvider.GetOrNullAsync(settingName);
         if (!TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out var expiry) ||

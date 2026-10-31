@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Minio;
 using Minio.DataModel.Args;
@@ -26,9 +27,11 @@ public class StoredFilePresignedUrlProvider(
     : ITransientDependency
 {
     // Blob icin ayarli sure boyunca gecerli GET baglantisi uretir.
-    public virtual async Task<(string Url, DateTime ExpiresAt)> CreateGetAsync(string blobName)
+    public virtual async Task<(string Url, DateTime ExpiresAt)> CreateGetAsync(
+        string blobName,
+        CancellationToken cancellationToken = default)
     {
-        var storage = await ReadStorageAsync();
+        var storage = await ReadStorageAsync(cancellationToken);
         var expirySeconds = (int)storage.PresignedGetExpiry.TotalSeconds;
         var url = await BuildClient(storage).PresignedGetObjectAsync(
             new PresignedGetObjectArgs()
@@ -40,9 +43,11 @@ public class StoredFilePresignedUrlProvider(
     }
 
     // Blob icin ayarli sure boyunca gecerli PUT baglantisi uretir.
-    public virtual async Task<(string Url, DateTime ExpiresAt)> CreatePutAsync(string blobName)
+    public virtual async Task<(string Url, DateTime ExpiresAt)> CreatePutAsync(
+        string blobName,
+        CancellationToken cancellationToken = default)
     {
-        var storage = await ReadStorageAsync();
+        var storage = await ReadStorageAsync(cancellationToken);
         var expirySeconds = (int)storage.PresignedPutExpiry.TotalSeconds;
         var url = await BuildClient(storage).PresignedPutObjectAsync(
             new PresignedPutObjectArgs()
@@ -68,9 +73,9 @@ public class StoredFilePresignedUrlProvider(
                 blobName));
 
     // Runtime'da degisebilen ayarlari her cagri icin ortak okuyucudan tazeler.
-    private async Task<FileStorageOptions> ReadStorageAsync()
+    private async Task<FileStorageOptions> ReadStorageAsync(CancellationToken cancellationToken = default)
     {
-        var storage = await settingProvider.ReadFileStorageAsync();
+        var storage = await settingProvider.ReadFileStorageAsync(cancellationToken);
         storage.EnsurePresignedConfigured();
         return storage;
     }

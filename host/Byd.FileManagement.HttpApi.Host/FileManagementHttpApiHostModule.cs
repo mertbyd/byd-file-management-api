@@ -2,20 +2,26 @@
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
+using Byd.AuthManagement.EntityFrameworkCore;
 using Byd.CoreExtensions;
 using Byd.CoreExtensions.Extensions;
 using Byd.CoreExtensions.Options;
 using Byd.FileManagement.EntityFrameworkCore;
+using Byd.FileManagement.MultiTenancy;
 using Volo.Abp;
+using Volo.Abp.AspNetCore.Authentication.JwtBearer;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.AspNetCore.MultiTenancy;
 using Volo.Abp.AspNetCore.Serilog;
-using Volo.Abp.Authorization;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
+using Volo.Abp.MultiTenancy;
 using Volo.Abp.Swashbuckle;
 
 namespace Byd.FileManagement;
@@ -24,11 +30,15 @@ namespace Byd.FileManagement;
     typeof(FileManagementApplicationModule),
     typeof(FileManagementEntityFrameworkCoreModule),
     typeof(FileManagementHttpApiModule),
+    typeof(AuthManagementEntityFrameworkCoreModule),
     typeof(AbpAspNetCoreMvcModule),
+    typeof(AbpAspNetCoreMultiTenancyModule),
+    typeof(AbpAspNetCoreAuthenticationJwtBearerModule),
     typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpSwashbuckleModule))]
-// islevi: File HTTP hostunun ABP modul kompozisyonunu kurar ve tuketilen core modulunu bu host'a baglar.
+// islevi: File HTTP hostunun ABP modul kompozisyonunu kurar ve tuketilen core modulunu bu host'a baglar. Izin ve
+// feature degerleri auth EF paketi uzerinden AuthManagement baglanti dizesindeki auth veritabanindan okunur.
 // sistemdeki gorevi: File modulunu ayaga kaldiran calistirilabilir host; core semasini cozer, core modul ayarini beyan eder ve core pipeline'ini takar.
 public class FileManagementHttpApiHostModule : AbpModule
 {
@@ -49,12 +59,29 @@ public class FileManagementHttpApiHostModule : AbpModule
             options.EnvironmentName = environmentName;
         });
 
-        ConfigureAuthorization(context);
+        // Tenant token'daki claim'den cozulur; kapali kalirsa her istek host kapsaminda calisir ve host izinleri gecerli olur.
+        Configure<AbpMultiTenancyOptions>(options =>
+        {
+            options.IsEnabled = MultiTenancyConsts.IsEnabled;
+        });
+
+        ConfigureAuthentication(context);
 
         context.Services.AddAbpSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo { Title = "FileManagement API", Version = "v1" });
             options.CustomSchemaIds(type => type.FullName);
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header
+            });
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                { new OpenApiSecuritySchemeReference("Bearer", document), [] }
+            });
 
             var xmlDocumentationFile = $"{typeof(FileManagementHttpApiModule).Assembly.GetName().Name}.xml";
             var xmlDocumentationPath = Path.Combine(AppContext.BaseDirectory, xmlDocumentationFile);
@@ -64,16 +91,19 @@ public class FileManagementHttpApiHostModule : AbpModule
             }
         });
     }
-    //todo auth gelince kapatılacak 
-    // Bu host'un onunde henuz bir kimlik dogrulama sunucusu yok. Development'ta yetki kontrolu
-    // her zaman gecer ki uclar lokalde denenebilsin; diger ortamlarda hicbir sey gevsetilmez ve
-    // gercek bir saglayici baglanana kadar korumali uclar kapali kalir.
-    private static void ConfigureAuthorization(ServiceConfigurationContext context)
+
+    // Token'i auth sunucusu uretir; bu host imzayi sunucunun yayinladigi anahtarla, audience'i de
+    // token'a yazilan API scope'uyla dogrular.
+    private static void ConfigureAuthentication(ServiceConfigurationContext context)
     {
-        if (context.Services.GetHostingEnvironment().IsDevelopment())
-        {
-            context.Services.AddAlwaysAllowAuthorization();
-        }
+        var configuration = context.Services.GetConfiguration();
+        context.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddAbpJwtBearer(options =>
+            {
+                options.Authority = configuration["AuthServer:Authority"];
+                options.Audience = configuration["AuthServer:Audience"];
+                options.RequireHttpsMetadata = configuration.GetValue<bool>("AuthServer:RequireHttpsMetadata");
+            });
     }
 
     // HTTP pipeline'ini kurar; core mukerrer istek korumasi rate limiter'dan sonra, endpointlerden once takilir.
@@ -86,16 +116,21 @@ public class FileManagementHttpApiHostModule : AbpModule
         }
         app.UseCorrelationId();
         app.UseRouting();
+        app.UseAuthentication();
+        if (MultiTenancyConsts.IsEnabled)
+        {
+            app.UseMultiTenancy();
+        }
         app.UseSwagger();
         app.UseAbpSwaggerUI(options =>
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.json", "FileManagement API");
         });
         app.UseRateLimiter();
-        // Uclardaki [Authorize] metadatasi bu middleware olmadan calismaz; yoksa istek 500 doner.
-        app.UseAuthorization();
         app.UseCoreExtensions();//core module
         app.UseFileManagement();//bu modulun acilis isi: MinioSettings ayarini bellege yukler
+        // Organizasyon kapsami core middleware'inde kurulur; yetki kontrolu ondan sonra calisir.
+        app.UseAuthorization();
         app.UseConfiguredEndpoints();
         return Task.CompletedTask;
     }

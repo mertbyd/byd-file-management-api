@@ -13,6 +13,7 @@
     "FileManagement:010001": "Dosyanın içerik türü adından çözülemedi.",
     "FileManagement:020001": "Dosya kategorisi adı zorunludur.",
     "FileManagement:020002": "Dosya kategorisi adı 128 karakteri aşamaz.",
+    "FileManagement:020003": "Dosya kategorisinin azami dosya boyutu sıfırdan büyük olmalıdır.",
     "FileManagement:010002": "Dosya izin verilen azami boyutu asiyor.",
     "FileManagement:010003": "Dosya adi 260 karakteri asamaz.",
     "FileManagement:030001": "Zorunlu dosya depolama ayari {SettingKey} tanimlanmamis."

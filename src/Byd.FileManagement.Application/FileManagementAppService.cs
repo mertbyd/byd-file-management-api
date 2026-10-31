@@ -1,7 +1,6 @@
 ﻿using Byd.FileManagement.Localization;
 using Volo.Abp.Application.Services;
 using Volo.Abp.DependencyInjection;
-using Volo.Abp.Threading;
 
 namespace Byd.FileManagement;
 
@@ -19,8 +18,4 @@ public abstract class FileManagementAppService : ApplicationService
     {
         return LazyServiceProvider.LazyGetRequiredService<TService>();
     }
-
-    // Aktif application isteginin iptal belirtecini lazy provider uzerinden acar.
-    protected ICancellationTokenProvider CancellationTokenProvider =>
-        LazyGetRequiredService<ICancellationTokenProvider>();
 }

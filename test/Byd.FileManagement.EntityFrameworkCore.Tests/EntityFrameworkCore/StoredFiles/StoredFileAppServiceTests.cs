@@ -2,17 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using NSubstitute;
 using Byd.FileManagement.Models.StoredFiles;
 using Byd.FileManagement.Consts;
 using Byd.FileManagement.Dtos.StoredFiles;
 using Byd.FileManagement.Entities.FileCategories;
 using Byd.FileManagement.EntityFrameworkCore.FileCategories;
+using Byd.FileManagement.Etos.StoredFiles;
 using Byd.FileManagement.Interfaces.FileCategories;
 using Byd.FileManagement.Managers.FileCategories;
 using Byd.FileManagement.Services.StoredFiles;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Caching;
+using Volo.Abp.EventBus.Distributed;
 using Xunit;
 
 namespace Byd.FileManagement.EntityFrameworkCore.StoredFiles;
@@ -28,6 +33,13 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
     private const string PresignedBucketName = "presigned-tests";
     private static readonly byte[] FirstContent = "ilk icerik"u8.ToArray();
     private static readonly byte[] SecondContent = "ikinci icerik"u8.ToArray();
+    private readonly IDistributedEventBus _distributedEventBus = Substitute.For<IDistributedEventBus>();
+
+    // Yayinlanan olaylari RabbitMQ'ya gondermeden dogrulamak icin dagitik olay yolunu sahteyle degistirir.
+    protected override void AfterAddApplication(IServiceCollection services)
+    {
+        services.Replace(ServiceDescriptor.Singleton(_distributedEventBus));
+    }
 
     // Yuklenen dosyanin kaydinin ve byte'larinin geri okunabildigini dogrular.
     [Fact]
@@ -47,6 +59,23 @@ public class StoredFileAppServiceTests : FileManagementEntityFrameworkCoreTestBa
             downloaded.Data.ShouldBe(FirstContent);
             downloaded.OriginalFileName.ShouldBe("rapor.pdf");
         });
+    }
+
+    // Dogrudan yuklemenin kayit kesinlesince tamamlanma olayini yayinladigini dogrular.
+    [Fact]
+    public async Task Should_publish_upload_completed_event_after_upload()
+    {
+        var externalId = Guid.NewGuid();
+        var uploaded = await WithUnitOfWorkAsync(async () =>
+            await GetRequiredService<IStoredFileAppService>().UploadAsync(
+                BuildUpload(externalId, await CreateCategoryIdAsync(), FirstContent, "rapor.pdf")));
+
+        await _distributedEventBus.Received(1).PublishAsync(
+            Arg.Is<StoredFileUploadCompletedEto>(completed => completed.Id == uploaded.Id
+                && completed.ExternalId == externalId
+                && completed.OriginalFileName == "rapor.pdf"),
+            Arg.Any<bool>(),
+            Arg.Any<bool>());
     }
 
     // Indirme cevabinin icerik turunu dosya adindan uretip tasidigini dogrular.

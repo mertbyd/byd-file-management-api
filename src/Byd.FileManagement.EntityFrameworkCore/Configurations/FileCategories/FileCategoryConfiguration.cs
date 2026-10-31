@@ -19,7 +19,6 @@ public sealed class FileCategoryConfiguration : IEntityTypeConfiguration<FileCat
         builder.ToTable(FileCategoryConsts.TableName, FileManagementDbProperties.DbSchema);
         builder.ConfigureByConvention();
         builder.Property(entity => entity.Name)
-            .IsRequired()
             .HasMaxLength(FileCategoryConsts.MaxNameLength);
 
         // Ad, tuketicinin dosyalarini adresledigi anahtardir; ayni adin ikinci kez acilmasi

@@ -33,8 +33,6 @@ public class StoredFile : AuditedAggregateRoot<Guid>, IMultiTenant
     public string BlobName { get; internal set; } = default!;
     // Kullanicinin yukledigi ozgun dosya adi.
     public string OriginalFileName { get; internal set; } = default!;
-    // TODO: SubOrganizationId - alt organizasyon kirilimi gerektiginde eklenecek.
-    //       Su an hicbir tuketici bu seviyede filtrelemiyor; kolon acilmadi.
 
     // EF Core materializasyonu icin parametresiz ctor.
     protected StoredFile()

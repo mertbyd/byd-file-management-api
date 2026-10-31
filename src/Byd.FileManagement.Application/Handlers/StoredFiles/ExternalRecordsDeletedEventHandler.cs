@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Byd.FileManagement.BlobStoring;
 using Byd.FileManagement.Entities.StoredFiles;
@@ -48,12 +49,12 @@ public class ExternalRecordsDeletedEventHandler(
     }
 
     // Yeniden teslimde byte artigi kalmamasi icin once icerikleri, sonra satirlari siler.
-    private async Task RemoveAsync(List<StoredFile> files)
+    private async Task RemoveAsync(List<StoredFile> files, CancellationToken cancellationToken = default)
     {
         foreach (var file in files)
         {
-            await blobContainer.DeleteAsync(file.BlobName);
+            await blobContainer.DeleteAsync(file.BlobName, cancellationToken);
         }
-        await repository.DeleteManyAsync(files, autoSave: true);
+        await repository.DeleteManyAsync(files, autoSave: true, cancellationToken);
     }
 }

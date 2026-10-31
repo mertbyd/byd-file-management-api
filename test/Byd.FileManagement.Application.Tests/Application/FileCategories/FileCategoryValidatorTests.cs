@@ -10,7 +10,7 @@ namespace Byd.FileManagement.Application.FileCategories;
 /// <summary>
 /// FileCategory public input validator sozlesmesini dogrular.
 /// </summary>
-// islevi: Create ve update girdilerinin kararli zorunluluk ve uzunluk hata kodlarini urettigini kanitlar.
+// islevi: Create ve update girdilerinin kararli zorunluluk, uzunluk ve azami boyut hata kodlarini urettigini kanitlar.
 // sistemdeki gorevi: Controller girdilerinin repository'ye ulasmadan sekil dogrulamasindan gecmesini koruyan testtir.
 public class FileCategoryValidatorTests
     : FileManagementApplicationTestBase<FileManagementApplicationTestModule>
@@ -35,5 +35,18 @@ public class FileCategoryValidatorTests
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(error => error.ErrorCode == FileCategoryExceptionCodes.NameTooLong);
+    }
+
+    // Sifir azami boyutun bounded kodla reddedildigini, bos boyutun kurala girmedigini dogrular.
+    [Fact]
+    public void Should_reject_non_positive_max_file_size()
+    {
+        var invalid = new CreateFileCategoryDtoValidator().Validate(
+            new CreateFileCategoryDto { Name = "Bolum", MaxFileSize = 0 });
+        var unset = new CreateFileCategoryDtoValidator().Validate(
+            new CreateFileCategoryDto { Name = "Bolum" });
+
+        invalid.Errors.ShouldContain(error => error.ErrorCode == FileCategoryExceptionCodes.MaxFileSizeInvalid);
+        unset.IsValid.ShouldBeTrue();
     }
 }

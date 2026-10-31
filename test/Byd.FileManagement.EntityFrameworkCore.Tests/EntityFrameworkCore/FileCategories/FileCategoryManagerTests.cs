@@ -13,8 +13,8 @@ namespace Byd.FileManagement.EntityFrameworkCore.FileCategories;
 /// <summary>
 /// FileCategoryManager is kurallarini dogrular.
 /// </summary>
-// islevi: Ad normalizasyonunun, zorunlu ad guard'inin ve ad benzersizliginin Manager tarafindan
-// uygulandigini kanitlar.
+// islevi: Ad normalizasyonunun, azami boyut atamasinin, zorunlu ad guard'inin ve ad benzersizliginin Manager
+// tarafindan uygulandigini kanitlar.
 // sistemdeki gorevi: FileCategory data-shell mutasyonlarinin domain sahibinde kaldigini koruyan testtir.
 public class FileCategoryManagerTests : FileManagementEntityFrameworkCoreTestBase
 {
@@ -36,6 +36,26 @@ public class FileCategoryManagerTests : FileManagementEntityFrameworkCoreTestBas
                 CancellationToken.None);
             entity.Name.ShouldBe("Rapor");
             entity.Code.ShouldBe(20);
+        });
+    }
+
+    // Azami dosya boyutunun create ve update akislarinda entity'ye yazildigini dogrular.
+    [Fact]
+    public async Task Should_apply_max_file_size()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var manager = GetRequiredService<FileCategoryManager>();
+            var entity = await manager.CreateAsync(
+                new FileCategoryCreateModel { Name = "Bolum kaynagi", MaxFileSize = 4096 },
+                CancellationToken.None);
+
+            entity.MaxFileSize.ShouldBe(4096);
+            await manager.UpdateAsync(
+                entity,
+                new FileCategoryUpdateModel { Name = "Bolum kaynagi" },
+                CancellationToken.None);
+            entity.MaxFileSize.ShouldBeNull();
         });
     }
 

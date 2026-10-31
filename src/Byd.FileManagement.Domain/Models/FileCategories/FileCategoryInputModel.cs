@@ -9,4 +9,5 @@ public abstract class FileCategoryInputModel
 {
     public string Name { get; set; } = default!;
     public int? Code { get; set; }
+    public long? MaxFileSize { get; set; }
 }

@@ -7,7 +7,7 @@ namespace Byd.FileManagement.Entities.FileCategories;
 /// <summary>
 /// Dosyalarin siniflandirildigi kategori kaydini tasir.
 /// </summary>
-// islevi: Kategorinin adini ve istege bagli is kodunu kalici olarak tutar.
+// islevi: Kategorinin adini, istege bagli is kodunu ve presigned yuklemenin azami boyutunu kalici olarak tutar.
 // sistemdeki gorevi: Kurallari FileCategoryManager'a birakan ince lookup persistence kabugudur.
 // Bir dosyanin hangi belge turune ait oldugunu belirler; StoredFile buna baglanir.
 public class FileCategory : CreationAuditedEntity<Guid>, ILookup
@@ -17,6 +17,9 @@ public class FileCategory : CreationAuditedEntity<Guid>, ILookup
 
     // Is tarafinin istege bagli kategori kodudur.
     public int? Code { get; internal set; }
+
+    // Kategoriye presigned yuklenebilecek azami boyuttur (byte); bossa StoredFileConsts.MaxDataLength gecer.
+    public long? MaxFileSize { get; internal set; }
 
     // EF Core materializasyonu icin bos kurucudur.
     protected FileCategory()

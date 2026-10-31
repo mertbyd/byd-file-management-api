@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Byd.FileManagement.Dtos.FileCategories;
 using Volo.Abp.Application.Services;
@@ -14,17 +15,17 @@ namespace Byd.FileManagement.Services.FileCategories;
 public interface IFileCategoryAppService : IApplicationService
 {
     // Kimligi verilen dosya kategorisini getirir.
-    Task<FileCategoryDto> GetAsync(Guid id);
+    Task<FileCategoryDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
     // Aktiflik filtresine uyan dosya kategorilerini getirir.
-    Task<List<FileCategoryDto>> GetListAsync();
+    Task<List<FileCategoryDto>> GetListAsync(CancellationToken cancellationToken = default);
 
     // Dogrulanmis girdiden yeni dosya kategorisi olusturur.
-    Task<FileCategoryDto> CreateAsync(CreateFileCategoryDto input);
+    Task<FileCategoryDto> CreateAsync(CreateFileCategoryDto input, CancellationToken cancellationToken = default);
 
     // Kimligi verilen dosya kategorisinin degistirilebilir alanlarini gunceller.
-    Task<FileCategoryDto> UpdateAsync(Guid id, UpdateFileCategoryDto input);
+    Task<FileCategoryDto> UpdateAsync(Guid id, UpdateFileCategoryDto input, CancellationToken cancellationToken = default);
 
     // Kimligi verilen dosya kategorisini siler.
-    Task DeleteAsync(Guid id);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

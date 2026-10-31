@@ -25,7 +25,7 @@ public class FileCategoryManager : BaseManager<FileCategory, Guid>
     // Kimligi verilen kategoriyi getirir; yoksa BaseManager lokalize NotFound firlatir.
     public virtual async Task<FileCategory> EnsureExistsAsync(
         Guid id,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         return (await TryGetByIdAsync(id, throwIfNotExists: true, cancellationToken))!;
     }
@@ -33,7 +33,7 @@ public class FileCategoryManager : BaseManager<FileCategory, Guid>
     // Create modelini normalize edip yeni FileCategory entity'sine donusturur.
     public virtual async Task<FileCategory> CreateAsync(
         FileCategoryCreateModel model,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(model);
         var entity = new FileCategory(GuidGenerator.Create());
@@ -46,7 +46,7 @@ public class FileCategoryManager : BaseManager<FileCategory, Guid>
     public virtual async Task<FileCategory> UpdateAsync(
         FileCategory entity,
         FileCategoryUpdateModel model,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
         ArgumentNullException.ThrowIfNull(model);
@@ -61,11 +61,12 @@ public class FileCategoryManager : BaseManager<FileCategory, Guid>
     private async Task ApplyAsync(
         FileCategory entity,
         FileCategoryInputModel model,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var name = NormalizeRequiredText(model.Name);
         await CheckAlreadyExistsAsync(other => other.Name == name, entity.Id, cancellationToken);
         entity.Name = name;
         entity.Code = model.Code;
+        entity.MaxFileSize = model.MaxFileSize;
     }
 }

@@ -15,6 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Byd.CoreExtensions.HttpApi" Version="0.3.0" />
+    <PackageReference Include="Byd.CoreExtensions.HttpApi" Version="0.3.11" />
   </ItemGroup>
 </Project>

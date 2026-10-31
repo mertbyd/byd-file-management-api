@@ -13,6 +13,7 @@
     "FileManagement:010001": "The content type of the file could not be resolved from its name.",
     "FileManagement:020001": "File category name is required.",
     "FileManagement:020002": "File category name cannot exceed 128 characters.",
+    "FileManagement:020003": "File category maximum file size must be greater than zero.",
     "FileManagement:010002": "The file exceeds the maximum allowed size.",
     "FileManagement:010003": "File name cannot exceed 260 characters.",
     "FileManagement:030001": "Required file storage setting {SettingKey} is not configured."

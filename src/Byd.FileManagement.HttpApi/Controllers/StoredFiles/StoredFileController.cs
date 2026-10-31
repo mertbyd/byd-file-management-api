@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,17 +29,20 @@ public class StoredFileController : FileManagementController
     /// Verilen is kayitlarina bagli dosyalarin metadata bilgilerini toplu getirir.
     /// </summary>
     /// <param name="externalIds">Dosyalari aranacak is kaydi kimlikleri.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Request: ExternalId listesi.
-    /// Response value elemanlari dosya Id, ExternalId, kapsam, kategori, modul, dosya adi ve audit
-    /// alanlarini tasir. Bu endpoint byte icerigi dondurmez.
+    /// Request {
+    ///   externalIds (Guid[]) → Dosyalari aranacak is kaydi kimlikleri
+    /// }
+    /// Response elemanlari StoredFile metadata alanlarini tasir; byte icerigi dondurulmez.
     /// </remarks>
     [HttpPost(StoredFileRoutes.ByExternalIds)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<List<StoredFileDto>>> GetListByExternalIds(
-        [FromBody] List<Guid> externalIds)
+    public virtual async Task<Result<List<StoredFileDto>>> GetListByExternalIdsAsync(
+        [FromBody] List<Guid> externalIds,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.GetListByExternalIdsAsync(externalIds);
+        var result = await AppService.GetListByExternalIdsAsync(externalIds, cancellationToken);
         return result;
     }
 
@@ -47,17 +51,22 @@ public class StoredFileController : FileManagementController
     /// </summary>
     /// <param name="externalId">Dosyalarin bagli oldugu is kaydi kimligi.</param>
     /// <param name="categoryId">Dosyalarin ait oldugu kategori kimligi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Response value elemanlari StoredFile metadata alanlarini tasir. Eslesen kayit yoksa bos liste
-    /// doner; dosya byte'lari bu endpointte okunmaz.
+    /// Request {
+    ///   externalId (Guid) → Is kaydi kimligi
+    ///   categoryId (Guid) → Dosya kategorisi kimligi
+    /// }
+    /// Response elemanlari StoredFile metadata alanlarini tasir; eslesen kayit yoksa bos liste doner.
     /// </remarks>
     [HttpGet(StoredFileRoutes.ByCategory)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<List<StoredFileDto>>> GetListByCategory(
+    public virtual async Task<Result<List<StoredFileDto>>> GetListByCategoryAsync(
         [FromQuery] Guid externalId,
-        [FromQuery] Guid categoryId)
+        [FromQuery] Guid categoryId,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.GetListByCategoryAsync(externalId, categoryId);
+        var result = await AppService.GetListByCategoryAsync(externalId, categoryId, cancellationToken);
         return result;
     }
 
@@ -65,16 +74,20 @@ public class StoredFileController : FileManagementController
     /// Verilen kategorideki tum dosyalari metadata ve byte icerikleriyle getirir.
     /// </summary>
     /// <param name="categoryId">Dosyalari aranacak kategori kimligi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Response value elemanlari StoredFile metadata alanlarini ve Data degerini tasir.
-    /// Data, MinIO/blob depodan okunan byte[] icerigidir ve JSON icinde Base64 olarak gorunur.
+    /// Request {
+    ///   categoryId (Guid) → Dosya kategorisi kimligi
+    /// }
+    /// Response elemanlari StoredFile metadata alanlarini ve JSON'da Base64 gorunen Data (byte[]) icerigini tasir.
     /// </remarks>
     [HttpGet(StoredFileRoutes.ByCategoryWithContent)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<List<StoredFileWithContentDto>>> GetListWithContentByCategory(
-        [FromQuery] Guid categoryId)
+    public virtual async Task<Result<List<StoredFileWithContentDto>>> GetListWithContentByCategoryAsync(
+        [FromQuery] Guid categoryId,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.GetListWithContentByCategoryAsync(categoryId);
+        var result = await AppService.GetListWithContentByCategoryAsync(categoryId, cancellationToken);
         return result;
     }
 
@@ -83,17 +96,25 @@ public class StoredFileController : FileManagementController
     /// </summary>
     /// <param name="externalId">Dosyalarin bagli oldugu is kaydi kimligi.</param>
     /// <param name="categoryId">Dosyalarin ait oldugu kategori kimligi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Yalniz iki kimlikle de eslesen kayitlar doner. Her elemanda StoredFile metadata alanlari ve
-    /// MinIO/blob depodan okunan Data bulunur; byte[] JSON cevabinda Base64 olarak gosterilir.
+    /// Request {
+    ///   externalId (Guid) → Is kaydi kimligi
+    ///   categoryId (Guid) → Dosya kategorisi kimligi
+    /// }
+    /// Response elemanlari StoredFile metadata alanlarini ve JSON'da Base64 gorunen Data (byte[]) icerigini tasir.
     /// </remarks>
     [HttpGet(StoredFileRoutes.ByExternalIdAndCategoryWithContent)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<List<StoredFileWithContentDto>>> GetListWithContentByExternalIdAndCategory(
+    public virtual async Task<Result<List<StoredFileWithContentDto>>> GetListWithContentByExternalIdAndCategoryAsync(
         [FromQuery] Guid externalId,
-        [FromQuery] Guid categoryId)
+        [FromQuery] Guid categoryId,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.GetListWithContentByExternalIdAndCategoryAsync(externalId, categoryId);
+        var result = await AppService.GetListWithContentByExternalIdAndCategoryAsync(
+            externalId,
+            categoryId,
+            cancellationToken);
         return result;
     }
 
@@ -101,16 +122,23 @@ public class StoredFileController : FileManagementController
     /// Dosya byte'larini blob depoya yazar ve olusan StoredFile kaydini dondurur.
     /// </summary>
     /// <param name="input">Is kaydi, kategori, dosya adi ve byte icerigi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Request { ExternalId, CategoryId, Data, FileName }. Data byte[] oldugu icin JSON isteginde
-    /// Base64 gonderilir. File modulu metadata kaydini acar, icerigi ayarli blob saglayicisina yazar
-    /// Response value StoredFile metadata bilgisidir.
+    /// Request {
+    ///   ExternalId (Guid)  → Dosyanin bagli oldugu is kaydi kimligi
+    ///   CategoryId (Guid)  → Dosya kategorisi kimligi
+    ///   FileName (string)  → Ozgun dosya adi
+    ///   Data (byte[])      → JSON'da Base64 gonderilen dosya icerigi
+    /// }
+    /// Response StoredFile metadata alanlarini tasir.
     /// </remarks>
     [HttpPost(StoredFileRoutes.Upload)]
     [Authorize(FileManagementPermissions.StoredFiles.Manage)]
-    public virtual async Task<Result<StoredFileDto>> Upload([FromBody] UploadStoredFileDto input)
+    public virtual async Task<Result<StoredFileDto>> UploadAsync(
+        [FromBody] UploadStoredFileDto input,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.UploadAsync(input);
+        var result = await AppService.UploadAsync(input, cancellationToken);
         return result;
     }
 
@@ -118,15 +146,24 @@ public class StoredFileController : FileManagementController
     /// Kimligi verilen dosyanin byte icerigini standart Result cevabi icinde getirir.
     /// </summary>
     /// <param name="id">Indirilecek StoredFile kaydinin kimligi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Response value { Data, OriginalFileName, ContentType }. Data blob depodan okunan byte[]
-    /// degeridir ve JSON icinde Base64 olarak gorunur.
+    /// Request {
+    ///   id (Guid) → StoredFile kaydinin kimligi
+    /// }
+    /// Response {
+    ///   OriginalFileName (string) → Ozgun dosya adi
+    ///   ContentType (string)      → Dosya adindan cozulmus MIME turu
+    ///   Data (byte[])             → JSON'da Base64 gorunen dosya icerigi
+    /// }
     /// </remarks>
     [HttpGet(StoredFileRoutes.Download)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<DownloadStoredFileDto>> Download(Guid id)
+    public virtual async Task<Result<DownloadStoredFileDto>> DownloadAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.DownloadAsync(id);
+        var result = await AppService.DownloadAsync(id, cancellationToken);
         return result;
     }
 
@@ -134,15 +171,24 @@ public class StoredFileController : FileManagementController
     /// Kimligi verilen dosya icin dogrudan depolamaya giden sureli indirme baglantisi uretir.
     /// </summary>
     /// <param name="id">Presigned indirme baglantisi uretilecek StoredFile kaydinin kimligi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Response value kayit Id, imzali Url ve mutlak ExpiresAt zamanini tasir. Dosya byte'lari
-    /// uygulama tarafindan okunmaz; istemci icerigi dogrudan MinIO'dan indirir.
+    /// Request {
+    ///   id (Guid) → StoredFile kaydinin kimligi
+    /// }
+    /// Response {
+    ///   OriginalFileName (string) → Ozgun dosya adi
+    ///   Url (string)              → Sureli indirme baglantisi
+    ///   ExpiresAt (DateTime)      → Baglantinin mutlak bitis zamani
+    /// }
     /// </remarks>
     [HttpGet(StoredFileRoutes.PresignedUrl)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<PresignedUrlDto>> GetPresignedUrl(Guid id)
+    public virtual async Task<Result<PresignedUrlDto>> GetPresignedUrlAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.GetPresignedUrlAsync(id);
+        var result = await AppService.GetPresignedUrlAsync(id, cancellationToken);
         return result;
     }
 
@@ -151,18 +197,25 @@ public class StoredFileController : FileManagementController
     /// </summary>
     /// <param name="externalId">Dosyalarin bagli oldugu is kaydi kimligi.</param>
     /// <param name="categoryId">Dosyalarin ait oldugu kategori kimligi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Response value elemanlari kayit Id, OriginalFileName, imzali Url ve mutlak ExpiresAt
-    /// zamanini tasir. Eslesen kayit yoksa bos liste doner. Dosya byte'lari uygulama tarafindan
-    /// okunmaz; istemci her icerigi dogrudan MinIO'dan indirir.
+    /// Request {
+    ///   externalId (Guid) → Is kaydi kimligi
+    ///   categoryId (Guid) → Dosya kategorisi kimligi
+    /// }
+    /// Response elemanlari OriginalFileName (string), Url (string) ve ExpiresAt (DateTime) alanlarini tasir.
     /// </remarks>
     [HttpGet(StoredFileRoutes.ByExternalIdAndCategoryPresignedUrls)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<List<PresignedUrlDto>>> GetPresignedUrlsByExternalIdAndCategory(
+    public virtual async Task<Result<List<PresignedUrlDto>>> GetPresignedUrlsByExternalIdAndCategoryAsync(
         [FromQuery] Guid externalId,
-        [FromQuery] Guid categoryId)
+        [FromQuery] Guid categoryId,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.GetPresignedUrlsByExternalIdAndCategoryAsync(externalId, categoryId);
+        var result = await AppService.GetPresignedUrlsByExternalIdAndCategoryAsync(
+            externalId,
+            categoryId,
+            cancellationToken);
         return result;
     }
 
@@ -170,18 +223,26 @@ public class StoredFileController : FileManagementController
     /// Dosya byte'i almadan sureli dogrudan yukleme baglantisi uretir.
     /// </summary>
     /// <param name="input">Is kaydi, kategori ve ozgun dosya adi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Request byte icermez. Response value imzali PUT Url, mutlak ExpiresAt ve OriginalFileName
-    /// tasir. Kayit bu endpointte acilmaz; istemci byte'lari MinIO'ya yukleyince MinIO olayi ile
-    /// acilir. Yukleme bittikten sonra kayit birkac saniye icinde okuma uclarinda gorunur. Yukleme
-    /// yapilmazsa geride kayit kalmaz.
+    /// Request {
+    ///   ExternalId (Guid) → Dosyanin bagli oldugu is kaydi kimligi
+    ///   CategoryId (Guid) → Dosya kategorisi kimligi
+    ///   FileName (string) → Ozgun dosya adi
+    /// }
+    /// Response {
+    ///   OriginalFileName (string) → Ozgun dosya adi
+    ///   Url (string)              → Sureli PUT baglantisi
+    ///   ExpiresAt (DateTime)      → Baglantinin mutlak bitis zamani
+    /// }
     /// </remarks>
     [HttpPost(StoredFileRoutes.PresignedUpload)]
     [Authorize(FileManagementPermissions.StoredFiles.Manage)]
-    public virtual async Task<Result<PresignedUrlDto>> CreatePresignedUpload(
-        [FromBody] PresignedUploadStoredFileDto input)
+    public virtual async Task<Result<PresignedUrlDto>> CreatePresignedUploadAsync(
+        [FromBody] PresignedUploadStoredFileDto input,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.CreatePresignedUploadAsync(input);
+        var result = await AppService.CreatePresignedUploadAsync(input, cancellationToken);
         return result;
     }
 
@@ -189,15 +250,20 @@ public class StoredFileController : FileManagementController
     /// Kimligi verilen dosyayi tarayicinin dogrudan indirebilecegi HTTP dosya cevabi olarak getirir.
     /// </summary>
     /// <param name="id">Indirilecek StoredFile kaydinin kimligi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Response govdesi dosyanin ham byte'laridir; Result zarfi veya Base64 JSON bulunmaz.
-    /// Content-Type ve Content-Disposition basliklari kayitli dosya adiyla olusturulur.
+    /// Request {
+    ///   id (Guid) → StoredFile kaydinin kimligi
+    /// }
+    /// Response ham dosya govdesidir; Content-Type ve Content-Disposition basliklari kayitli dosyadan uretilir.
     /// </remarks>
     [HttpGet(StoredFileRoutes.DownloadContent)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<FileContentResult> DownloadContent(Guid id)
+    public virtual async Task<FileContentResult> DownloadContentAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var file = await AppService.DownloadAsync(id);
+        var file = await AppService.DownloadAsync(id, cancellationToken);
         return File(file.Data, file.ContentType, file.OriginalFileName);
     }
 
@@ -205,15 +271,18 @@ public class StoredFileController : FileManagementController
     /// Kimligi verilen dosyanin metadata kaydini ve blob icerigini siler.
     /// </summary>
     /// <param name="id">Silinecek StoredFile kaydinin kimligi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// File modulu once StoredFile kaydini, ardindan ayni kaydin BlobName degeriyle fiziksel icerigi
-    /// siler ve basarili istekte iceriksiz cevap dondurur.
+    /// Request {
+    ///   id (Guid) → Silinecek StoredFile kaydinin kimligi
+    /// }
+    /// Response basarili istekte iceriksizdir.
     /// </remarks>
     [HttpDelete(StoredFileRoutes.ById)]
     [Authorize(FileManagementPermissions.StoredFiles.Manage)]
-    public virtual async Task<Result> Delete(Guid id)
+    public virtual async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        await AppService.DeleteAsync(id);
+        await AppService.DeleteAsync(id, cancellationToken);
         return Result.NoContent();
     }
 
@@ -221,15 +290,30 @@ public class StoredFileController : FileManagementController
     /// Kimligi verilen dosyanin metadata kaydini getirir.
     /// </summary>
     /// <param name="id">Getirilecek StoredFile kaydinin kimligi.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Response value dosya Id, ExternalId, kapsam, kategori, modul, ozgun dosya adi ve audit
-    /// alanlarini tasir. Dosya byte'lari bu endpointte okunmaz.
+    /// Request {
+    ///   id (Guid) → StoredFile kaydinin kimligi
+    /// }
+    /// Response {
+    ///   Id                   (Guid)      → Kayit Id'si
+    ///   TenantId             (Guid?)     → Dosyanin tenant'i; bos ise host
+    ///   OrganizationId       (Guid?)     → Dosyanin yuklendigi organizasyon
+    ///   CategoryId           (Guid)      → Dosya kategorisi Id'si
+    ///   CategoryName         (string)    → Dosya kategorisi adi
+    ///   ExternalId           (Guid)      → Dosyanin bagli oldugu is kaydi Id'si
+    ///   ModuleName           (string)    → Dosyayi yazan modul
+    ///   OriginalFileName     (string)    → Yuklenen ozgun dosya adi
+    ///   CreationTime         (DateTime)  → Yukleme zamani
+    ///   LastModificationTime (DateTime?) → Son guncelleme zamani
+    /// }
+    /// Byte icerigi bu ucta dondurulmez; diger metadata uclari ayni alanlari tasir.
     /// </remarks>
     [HttpGet(StoredFileRoutes.ById)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<StoredFileDto>> Get(Guid id)
+    public virtual async Task<Result<StoredFileDto>> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var result = await AppService.GetAsync(id);
+        var result = await AppService.GetAsync(id, cancellationToken);
         return result;
     }
 
@@ -237,16 +321,23 @@ public class StoredFileController : FileManagementController
     /// Dosya metadata kayitlarini filtre, siralama ve sayfalama uygulayarak getirir.
     /// </summary>
     /// <param name="input">StoredFile filtre, siralama ve sayfalama bilgileri.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// ModuleName, ExternalId, CategoryId, TenantId ve CreationTime alanlari tipli filtre olarak
-    /// kullanilabilir. Response value StoredFile metadata listesidir; byte icerigi dondurulmez.
+    /// Request {
+    ///   Filters (StoredFileFilter?) → ModuleName, ExternalId, CategoryId, TenantId ve CreationTime filtreleri
+    ///   Sorting (string?)           → Siralama ifadesi
+    ///   SkipCount (int)            → Atlanacak kayit sayisi
+    ///   MaxResultCount (int)       → Alinacak azami kayit sayisi
+    /// }
+    /// Response StoredFile metadata listesidir; byte icerigi dondurulmez.
     /// </remarks>
     [HttpPost(StoredFileRoutes.FilteredList)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<List<StoredFileDto>>> GetFilteredList(
-        [FromBody] StoredFileListInput input)
+    public virtual async Task<Result<List<StoredFileDto>>> GetFilteredListAsync(
+        [FromBody] StoredFileListInput input,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.GetFilteredListAsync(input);
+        var result = await AppService.GetFilteredListAsync(input, cancellationToken);
         return result;
     }
 
@@ -254,15 +345,20 @@ public class StoredFileController : FileManagementController
     /// Verilen filtrelere uyan dosya metadata kayitlarinin toplam sayisini getirir.
     /// </summary>
     /// <param name="input">Sayimda kullanilacak StoredFile filtre bilgileri.</param>
+    /// <param name="cancellationToken">Istek iptal belirteci.</param>
     /// <remarks>
-    /// Liste endpointiyle ayni filtre kurallari uygulanir; response value eslesen kayit sayisidir.
+    /// Request filtreli liste ucuyla ayni filtre alanlarini tasir.
+    /// Response {
+    ///   value (int) → Filtrelere uyan kayit sayisi
+    /// }
     /// </remarks>
     [HttpPost(StoredFileRoutes.FilteredCount)]
     [Authorize(FileManagementPermissions.StoredFiles.View)]
-    public virtual async Task<Result<int>> GetFilteredCount(
-        [FromBody] StoredFileListInput input)
+    public virtual async Task<Result<int>> GetFilteredCountAsync(
+        [FromBody] StoredFileListInput input,
+        CancellationToken cancellationToken = default)
     {
-        var result = await AppService.GetFilteredCountAsync(input);
+        var result = await AppService.GetFilteredCountAsync(input, cancellationToken);
         return result;
     }
 }

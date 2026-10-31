@@ -31,9 +31,10 @@ public static class StoredFileConsts
     // Kullanicinin yukledigi ozgun dosya adinin azami uzunlugu.
     public const int MaxOriginalFileNameLength = 260;
 
-    // Yuklenebilir azami dosya boyutu (byte). Deger istek govdesinin bicimine gore secildi:
-    // byte'lar JSON icinde base64 tasindigi icin 20 MB ikili veri yaklasik 27 MB govde eder ve
-    // ASP.NET Core'un varsayilan 30 MB istek govdesi sinirinin altinda kalir.
+    // Kategori kendi sinirini koymadiginda presigned yuklemeye uygulanan azami boyut (byte). Deger byte
+    // yolunun govdesine gore secildi: byte'lar JSON icinde base64 tasindigi icin 20 MB ikili veri yaklasik
+    // 27 MB govde eder ve ASP.NET Core'un varsayilan 30 MB istek govdesi sinirinin altinda kalir. Presigned
+    // yukleme govdeden gecmez; buyuk dosya alan kategori FileCategory.MaxFileSize ile siniri yukseltir.
     public const int MaxDataLength = 20 * 1024 * 1024;
 
     // MinIO presigned baglantilarinin kabul ettigi azami gecerlilik suresi.
