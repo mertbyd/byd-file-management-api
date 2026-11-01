@@ -1,271 +1,100 @@
 # Byd.FileManagement
 
-[![NuGet](https://img.shields.io/nuget/v/Byd.FileManagement.Domain?label=Byd.FileManagement)](https://www.nuget.org/packages/Byd.FileManagement.Domain)
-![ABP](https://img.shields.io/badge/ABP-10.3-blue)
-![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
-![MinIO](https://img.shields.io/badge/depolama-MinIO-C72E49)
-
-Platformun dosya modülü. Başka bir modülün kaydına dosya ekler, okur, süreli bağlantı üretir ve siler. Her dosya iki
-şeyle adreslenir: dosyanın ait olduğu iş kaydının kimliği (`ExternalId`) ve dosyanın türü (`CategoryId`). Byte'lar MinIO'da,
-dosyanın bilgileri (metadata) PostgreSQL'de durur. Diğer modüller kendi dosya tablosunu, MinIO istemcisini ya da blob
-sarmalayıcısını yazmaz; bu modülü kullanır.
-
-## İçindekiler
-
-- [Platformdaki yeri](#platformdaki-yeri)
-- [Bir bakışta](#bir-bakışta)
-- [Özellikler](#özellikler)
-- [HTTP uçları](#http-uçları)
-- [Olaylar](#olaylar)
-- [Veritabanı](#veritabanı)
-- [Yetkiler](#yetkiler)
-- [Ayarlar](#ayarlar)
-- [Hata kodları](#hata-kodları)
-- [Bir modülde kullanmak](#bir-modülde-kullanmak)
-- [Geliştirme](#geliştirme)
-
-## Platformdaki yeri
+Platformun file modülü. Başka bir modülün kaydına file ekler, okur, süreli link üretir ve siler. Byte'lar MinIO'da,
+metadata PostgreSQL'de durur. Modüller kendi file tablosunu ya da MinIO client'ını yazmaz; bu modülü kullanır.
 
 ```mermaid
 flowchart LR
-    CORE[Byd.CoreExtensions] --> FILE[Byd.FileManagement<br/><b>bu repo</b>]
-    FILE --> LOG[Byd.LogManagement]
-    LOG --> AUTH[Byd.AuthManagement]
-    AUTH --> MODS[Vehicle, GTFS,<br/>GTFS Realtime, Content]
-    FILE -. byte'lar .-> MINIO[(MinIO)]
-    FILE -. metadata .-> PG[(PostgreSQL<br/>file_management)]
+    CORE[CoreExtensions] --> FILE[FileManagement] --> LOG[LogManagement] --> AUTH[AuthManagement] --> MODS[Domain modülleri]
+    FILE -. byte .-> MINIO[(MinIO)]
+    FILE -. metadata .-> PG[(PostgreSQL)]
     style FILE fill:#6a48f5,color:#fff,stroke:#4a2fd0
 ```
 
-## Bir bakışta
+Her file iki şeyle adreslenir: ait olduğu kaydın id'si (`ExternalId`, örneğin bir aracın id'si) ve türü (`CategoryId`,
+örneğin "ruhsat"). Bir modül "bu aracın ruhsatlarını getir" der, file modülü gerisini halleder.
 
-| | |
+## Capabilities
+
+| Capability | Ne sağlar |
 |---|---|
-| Paket ailesi | `Byd.FileManagement.*` |
-| Sürüm | `0.1.5` (`common.props`) |
-| Bağımlılık | `Byd.CoreExtensions` 0.3.11 |
-| Depolama | ABP BlobStoring + MinIO (`StoredFileBlobContainer`) |
-| Veritabanı | PostgreSQL, `file_management` şeması; bağlantı dizesi `FileManagement` (yoksa `Default`) |
-| Olay taşıyıcı | RabbitMQ; MinIO yükleme bildirimleri `Byd.Minio` exchange'inden gelir |
+| [File category](#file-category) | Belge türleri ve tür başına boyut limiti |
+| [Upload](#upload) | Küçük file'lar için API'den, büyük file'lar için doğrudan MinIO'ya upload |
+| [Read ve download](#read-ve-download) | Kayda ya da kategoriye göre listeleme, metadata ya da içerikle |
+| [Presigned link](#presigned-link) | Client'ın MinIO'dan doğrudan indirebileceği süreli link |
+| [Delete](#delete) | Tek file silme ya da bir modülün sildiği kayıtların file'larını toplu silme |
+| [Upload completed event](#upload-completed-event) | File hazır olunca diğer modüllere haber verme |
+| [Scope](#scope) | File'lar tenant'a ve yükleyen modüle bağlı |
+| [Storage provider](#storage-provider) | MinIO yerine başka bir blob provider kullanabilme |
 
-## Özellikler
+## File category
 
-### 1. Dosya kategorileri
+Category bir belge türüdür: "ruhsat", "fatura", "kapak görseli" gibi. File modülü kendi category'sini seed etmez;
+category'yi onu kullanan modül tanımlar. Her category kendi boyut limitini (`MaxFileSize`) koyabilir.
 
-Kategori bir belge türüdür: "ruhsat", "fatura", "kapak görseli" gibi. Modül hiçbir kategori seed etmez; kategorileri onu
-kullanan modül tanımlar. Kategori adı tekildir (en çok 128 karakter), isteğe bağlı bir sayısal kod taşır ve kendi dosya
-boyutu sınırını (`MaxFileSize`, byte) koyabilir.
+## Upload
 
-### 2. İki yükleme yolu
+İki yol vardır. Küçük file'lar API'den, büyük file'lar ve browser upload'ları doğrudan MinIO'ya gider.
 
-| | Byte yükleme | Presigned (doğrudan) yükleme |
+| | API upload | Presigned upload |
 |---|---|---|
-| Uç | `POST upload` | `POST presigned-upload` |
-| Byte'lar nereden geçer | API'nin istek gövdesinden (JSON içinde base64) | İstemciden doğrudan MinIO'ya |
-| Boyut sınırı | İstek gövdesi; yaklaşık 20 MB ikili veri | Kategorinin `MaxFileSize` değeri; boşsa 20 MB |
-| Kayıt ne zaman açılır | Hemen | MinIO "dosya yazıldı" bildirimi geldiğinde |
-| Uygun olduğu yer | Küçük dosyalar, sunucu içi çağrılar | Büyük dosyalar, tarayıcıdan yükleme |
-
-Presigned yolda dosya API'ye hiç uğramaz. Sınırı aşan dosyanın byte'ları silinir ve kayıt açılmaz.
+| Endpoint | `POST upload` | `POST presigned-upload` |
+| Byte'lar nereden geçer | API request body'si | Client'tan doğrudan MinIO'ya |
+| Boyut limiti | Yaklaşık 20 MB | Category'nin `MaxFileSize` değeri, yoksa 20 MB |
+| Kayıt ne zaman açılır | Hemen | MinIO "file yazıldı" bildirimi gelince |
 
 ```mermaid
 sequenceDiagram
-    participant C as İstemci
+    participant C as Client
     participant API as File API
-    participant Cache as Dağıtık önbellek
     participant M as MinIO
-    participant R as RabbitMQ (Byd.Minio)
-    participant H as Yükleme handler'ı
-    C->>API: POST presigned-upload (ExternalId, CategoryId, FileName)
-    API->>Cache: Bekleyen yüklemeyi yaz
-    API-->>C: Süreli PUT bağlantısı
-    C->>M: PUT dosya
-    M->>R: "nesne oluştu" bildirimi
-    R->>H: Bildirim tüketilir
-    H->>Cache: Bekleyen yüklemeyi bul
-    H->>H: Boyut ve kategori kontrolü
-    alt geçerli
-        H->>H: StoredFile kaydını aç
-        H-->>R: StoredFileUploadCompletedEto
-    else sınır aşıldı
-        H->>M: Byte'ları sil
+    participant H as Upload handler
+    C->>API: POST presigned-upload (externalId, categoryId, fileName)
+    API-->>C: Süreli PUT link'i
+    C->>M: PUT file
+    M->>H: "file yazıldı" bildirimi (RabbitMQ)
+    alt Limit içinde
+        H->>H: Kayıt açılır, upload completed event'i yayınlanır
+    else Limit aşıldı
+        H->>M: Byte'lar silinir
     end
 ```
 
-### 3. Okuma ve indirme
+Presigned yolda file API'ye hiç uğramaz; API sadece link verir ve sonucu kaydeder.
 
-| İhtiyaç | Yol |
+## Read ve download
+
+| İhtiyaç | Endpoint |
 |---|---|
-| Bir kaydın belirli kategorideki dosyaları | `by-category?externalId&categoryId` (yalnız bilgiler) |
-| Birden çok kaydın dosyaları | `by-external-ids` (gövdede kimlik listesi) |
-| Dosyalar byte'larıyla birlikte | `by-category/with-content`, `by-external-id-and-category/with-content` (listeyi küçük tutun) |
-| Tek dosyanın byte'ları | `{id}/download` (`Result` zarfı içinde) ya da `{id}/download/content` (tarayıcının indirebileceği ham dosya) |
-| Filtreli, sıralı, sayfalı liste | `filtered-list`, `filtered-count`; alanlar `moduleName`, `externalId`, `categoryId`, `tenantId`, `creationTime` |
+| Bir kaydın bir category'deki file'ları | `by-category` |
+| Birden çok kaydın file'ları | `by-external-ids` |
+| File'lar içerikleriyle birlikte | `by-category/with-content`, `by-external-id-and-category/with-content` |
+| Tek file'ın içeriği | `{id}/download` (JSON) ya da `{id}/download/content` (browser'ın indirebileceği ham file) |
+| Filter, sort, paging | `filtered-list`, `filtered-count` (core'un dynamic list query'si) |
 
-İçerik türü (MIME) tabloda tutulmaz; dosya adının uzantısından okuma anında çıkarılır.
+Content type tabloda tutulmaz; file adının uzantısından çıkarılır.
 
-### 4. Süreli indirme bağlantıları
+## Presigned link
 
-`{id}/presigned-url` tek dosya için, `by-external-id-and-category/presigned-urls` bir kaydın bütün dosyaları için
-doğrudan MinIO'ya giden süreli bağlantı üretir. Varsayılan süre 1 saattir; 1 saniye ile 7 gün arası verilebilir.
+`{id}/presigned-url` tek file için, `by-external-id-and-category/presigned-urls` bir kaydın bütün file'ları için MinIO'ya
+giden süreli link üretir. Client file'ı API'yi yormadan doğrudan indirir. Default süre 1 saattir, 7 güne kadar verilebilir.
 
-### 5. Silme
-
-| Durum | Ne yapılır |
-|---|---|
-| Tek dosya | `DELETE {id}`: önce kayıt, sonra byte'lar silinir |
-| Bir modül kendi kayıtlarını sildi | O modül `ExternalRecordsDeletedEto { TenantId, ExternalIds }` yayınlar; bu modül o kayıtların bütün dosyalarını toplu bulup siler |
-
-Toplu silme dağıtık olayla yürüdüğü için silen modülün dosya modülünü doğrudan çağırması gerekmez.
-
-### 6. Yükleme bitti bildirimi
-
-Bir dosyanın kaydı kesinleştiğinde (byte yüklemede hemen, presigned yüklemede bildirim işlenince) dağıtık
-`StoredFileUploadCompletedEto` yayınlanır. Dosyayı bekleyen modül bu olayı dinler; dosyayı sorarak beklemesi gerekmez.
-
-### 7. Farklı depolama sağlayıcısı
-
-Varsayılan sağlayıcı MinIO'dur. Kendi sağlayıcısını kullanacak host `FileManagementModuleOptions.IsDefaultStorageEnabled`
-değerini kapatır ve `StoredFileBlobContainer`'ı kendisi yapılandırır. Presigned uçlar yine MinIO ile imzalar.
-
-### 8. Kapsam
-
-`StoredFile` tenant'a bağlıdır (`IMultiTenant`) ve yükleyenin organizasyonunu da taşır; sorgular yürürlükteki tenant'la
-sınırlanır. Dosyayı yükleyen modülün adı
-(`ModuleName`) her kayda otomatik yazılır; çağıran bunu göndermez.
-
-## HTTP uçları
-
-Bütün cevaplar `Result<T>` zarfıyla döner; tek istisna ham dosya dönen `download/content`.
-
-**`api/file-management/stored-files`**
-
-| Yöntem | Yol | Ne yapar | İzin |
-|---|---|---|---|
-| `GET` | `{id}` | Dosya bilgilerini getirir | View |
-| `DELETE` | `{id}` | Kaydı ve byte'ları siler | Manage |
-| `POST` | `by-external-ids` | Birden çok kaydın dosya bilgilerini getirir | View |
-| `GET` | `by-category` | Bir kaydın kategorideki dosya bilgilerini getirir | View |
-| `GET` | `by-category/with-content` | Kategorideki bütün dosyaları byte'larıyla getirir | View |
-| `GET` | `by-external-id-and-category/with-content` | Bir kaydın kategorideki dosyalarını byte'larıyla getirir | View |
-| `GET` | `by-external-id-and-category/presigned-urls` | Bir kaydın kategorideki dosyaları için süreli bağlantılar | View |
-| `POST` | `upload` | Byte'ları depoya yazar, kaydı açar | Manage |
-| `POST` | `presigned-upload` | Doğrudan yükleme bağlantısı üretir | Manage |
-| `GET` | `{id}/download` | Byte'ları `Result` içinde döner | View |
-| `GET` | `{id}/download/content` | Byte'ları ham dosya olarak döner | View |
-| `GET` | `{id}/presigned-url` | Süreli indirme bağlantısı üretir | View |
-| `POST` | `filtered-list` | Filtreli, sıralı, sayfalı liste | View |
-| `POST` | `filtered-count` | Filtreye uyan kayıt sayısı | View |
-
-**`api/file-management/file-categories`**
-
-| Yöntem | Yol | Ne yapar | İzin |
-|---|---|---|---|
-| `GET` | `/` | Bütün kategoriler | View |
-| `GET` | `{id}` | Tek kategori | View |
-| `POST` | `/` | Yeni kategori | Manage |
-| `PUT` | `{id}` | Ad, kod ve boyut sınırını günceller | Manage |
-| `DELETE` | `{id}` | Kategoriyi siler | Manage |
-
-## Olaylar
-
-| Olay | Tür | Kim yayınlar | Ne zaman |
-|---|---|---|---|
-| `StoredFileUploadCompletedEto` (`FileManagement.StoredFiles.UploadCompleted`) | Dağıtık | Bu modül | Dosya kaydı kesinleşince; `Id`, `TenantId`, `OrganizationId`, `CategoryId`, `ExternalId`, `ModuleName`, `OriginalFileName` taşır |
-| `ExternalRecordsDeletedEto` (`FileManagement.StoredFiles.ExternalRecordsDeleted`) | Dağıtık | Tüketen modül | Kendi kayıtlarını silince; bu modül dosyaları siler |
-| `StoredFileUploadedEto` | Yerel | Bu modül | MinIO bildirimi alınınca, iç işleyiş için |
-
-## Veritabanı
+## Delete
 
 ```mermaid
-erDiagram
-    FileCategories ||--o{ StoredFiles : "CategoryId"
-    FileCategories {
-        guid Id PK
-        string Name "tekil"
-        int Code "isteğe bağlı"
-        long MaxFileSize "byte, isteğe bağlı"
-    }
-    StoredFiles {
-        guid Id PK
-        guid TenantId
-        guid OrganizationId
-        guid ExternalId "iş kaydının kimliği"
-        guid CategoryId FK
-        string ModuleName
-        string OriginalFileName
-        string BlobName "MinIO'daki nesne adı"
-    }
+flowchart LR
+    subgraph "Tek file"
+        D1[DELETE id] --> K1[Kayıt silinir] --> B1[Byte'lar silinir]
+    end
+    subgraph "Toplu"
+        M[Vehicle modülü araçları siler] --> E[ExternalRecordsDeletedEto]
+        E --> F[File modülü o kayıtların<br/>bütün file'larını siler]
+    end
 ```
 
-| Tablo | Şema | Ne tutar |
-|---|---|---|
-| `FileCategories` | `file_management` | Belge türleri ve boyut sınırları |
-| `StoredFiles` | `file_management` | Dosya bilgileri; byte'lar MinIO'da |
-
-## Yetkiler
-
-| İzin | Ne verir |
-|---|---|
-| `FileManagement.FileCategories.View` / `.Manage` | Kategorileri görmek / yönetmek |
-| `FileManagement.StoredFiles.View` / `.Manage` | Dosyaları görmek ve indirmek / yüklemek ve silmek |
-
-## Ayarlar
-
-MinIO bağlantısı ABP ayarlarından okunur (ayar yönetimi ya da appsettings'teki `Settings` bölümü). Modül `IConfiguration`
-okumaz.
-
-| Ayar | Varsayılan | Ne yapar |
-|---|---|---|
-| `FileManagement.MinioSettings.EndPoint` | yok | `host:port`, şema yazılmaz |
-| `FileManagement.MinioSettings.AccessKey` | yok | Erişim anahtarı |
-| `FileManagement.MinioSettings.SecretKey` | yok | Gizli anahtar (şifreli ayar) |
-| `FileManagement.MinioSettings.BucketName` | yok | Kova adı |
-| `FileManagement.MinioSettings.WithSsl` | `false` | TLS ile bağlanır |
-| `FileManagement.MinioSettings.CreateBucketIfNotExists` | `true` | Kova yoksa açar |
-| `FileManagement.MinioSettings.PresignedGetExpiry` | `01:00:00` | İndirme bağlantısı süresi |
-| `FileManagement.MinioSettings.PresignedPutExpiry` | `01:00:00` | Yükleme bağlantısı süresi |
-
-## Hata kodları
-
-| Kod | Anlamı |
-|---|---|
-| `FileManagement:010001` | Dosya adından içerik türü çıkarılamadı |
-| `FileManagement:010002` | Dosya izin verilen boyuttan büyük |
-| `FileManagement:010003` | Dosya adı çok uzun (en çok 260 karakter) |
-| `FileManagement:020001` / `020002` | Kategori adı boş / çok uzun |
-| `FileManagement:020003` | Kategori boyut sınırı geçersiz |
-| `FileManagement:030001` | Depolama ayarı girilmemiş; eksik ayar adı hata verisinde `SettingKey` olarak gelir |
-
-## Bir modülde kullanmak
-
-**1. Katman başına paket ve `[DependsOn]`**
-
-| Tüketen katman | Paket | Modül sınıfı |
-|---|---|---|
-| `<Modül>.Domain.Shared` | `Byd.FileManagement.Domain.Shared` | `FileManagementDomainSharedModule` |
-| `<Modül>.Domain` | `Byd.FileManagement.Domain` | `FileManagementDomainModule` |
-| `<Modül>.Application.Contracts` | `Byd.FileManagement.Application.Contracts` | `FileManagementApplicationContractsModule` |
-| `<Modül>.Application` | `Byd.FileManagement.Application` | `FileManagementApplicationModule` |
-| `<Modül>.EntityFrameworkCore` | `Byd.FileManagement.EntityFrameworkCore` | `FileManagementEntityFrameworkCoreModule` |
-| `<Modül>.HttpApi` | `Byd.FileManagement.HttpApi` | `FileManagementHttpApiModule` (yalnız host bu modülün uçlarını da açacaksa) |
-
-Yalnız silme olayını yayınlayacak bir modüle `Domain.Shared` paketi yeter. Her modül sınıfı karşılık gelen core modülüne
-zaten bağlıdır.
-
-**2. Kod içinden kullanım**
+Toplu silme distributed event'le yürür: kaydını silen modül file modülünü doğrudan çağırmaz, sadece event yayınlar.
 
 ```csharp
-// Kaydın dosyasını yükle
-var file = await StoredFiles.UploadAsync(new UploadStoredFileDto
-{
-    ExternalId = vehicle.Id,
-    CategoryId = licenseCategoryId,
-    FileName = "ruhsat.pdf",
-    Data = bytes
-});
-
-// Kayıtlar silindiğinde dosyalarını da sildir
 await DistributedEventBus.PublishAsync(new ExternalRecordsDeletedEto
 {
     TenantId = CurrentTenant.Id,
@@ -273,21 +102,49 @@ await DistributedEventBus.PublishAsync(new ExternalRecordsDeletedEto
 });
 ```
 
-**3. Host**
+## Upload completed event
 
-| Gereken | Neden |
-|---|---|
-| Core'un host bildirimi | `ResolveSchemaAndPrefix()`, `CoreExtensionsModuleOptions.ModuleName` ve `EnvironmentName` |
-| `ConnectionStrings:FileManagement` | Yoksa `Default` kullanılır |
-| `RabbitMQ` bölümü | Silme olayı ve MinIO bildirimleri için; olay yalnız aynı `ExchangeName`'i paylaşan host'lar arasında geçer |
-| Redis (birden çok örnekte) | Bekleyen presigned yüklemeler dağıtık önbellekte durur |
-| MinIO ayarları | Yukarıdaki dört zorunlu ayar |
-| MinIO bildirimi | Kova, "nesne oluştu" olaylarını RabbitMQ'daki `Byd.Minio` exchange'ine göndermeli |
+File'ın kaydı kesinleşince (API upload'ta hemen, presigned upload'ta bildirim işlenince) `StoredFileUploadCompletedEto`
+yayınlanır. File'ı bekleyen modül bu event'i dinler; polling yapmaz. Event file'ın id'sini, kaydını, category'sini,
+tenant ve organization'ını taşır.
+
+## Scope
+
+File tenant'a bağlıdır ve yükleyenin organization'ını taşır; query'ler aktif tenant'la sınırlanır. File'ı yükleyen
+modülün adı her kayda otomatik yazılır, çağıran göndermez.
+
+## Storage provider
+
+Default provider MinIO'dur ve bağlantı ABP setting'lerinden okunur (`FileManagement.MinioSettings.*`). Başka bir provider
+kullanacak host `FileManagementModuleOptions.IsDefaultStorageEnabled` değerini kapatıp blob container'ı kendisi
+yapılandırır.
+
+## Modülde kullanım
+
+Template'ten üretilen modül file'ı log ve auth paketleri üzerinden alır. Kod içinden kullanım:
 
 ```csharp
-app.UseCoreExtensions();
-app.UseFileManagement();
+var file = await StoredFiles.UploadAsync(new UploadStoredFileDto
+{
+    ExternalId = vehicle.Id,
+    CategoryId = licenseCategoryId,
+    FileName = "ruhsat.pdf",
+    Data = bytes
+});
 ```
+
+| Host config | Ne için |
+|---|---|
+| `FileManagement.MinioSettings.EndPoint`, `AccessKey`, `SecretKey`, `BucketName` | MinIO bağlantısı |
+| `RabbitMQ` | Toplu silme event'i ve MinIO bildirimleri |
+| `Redis` (birden çok instance varsa) | Bekleyen presigned upload'lar distributed cache'te durur |
+
+MinIO bucket'ı "file yazıldı" bildirimlerini RabbitMQ'daki `Byd.Minio` exchange'ine göndermelidir.
+
+| Permission | Ne verir |
+|---|---|
+| `FileManagement.FileCategories.View` / `.Manage` | Category'leri görmek / yönetmek |
+| `FileManagement.StoredFiles.View` / `.Manage` | File görmek ve indirmek / yüklemek ve silmek |
 
 ## Geliştirme
 
@@ -295,5 +152,3 @@ app.UseFileManagement();
 dotnet build Byd.FileManagement.slnx
 dotnet test Byd.FileManagement.slnx
 ```
-
-Host `host/Byd.FileManagement.HttpApi.Host` altındadır.
